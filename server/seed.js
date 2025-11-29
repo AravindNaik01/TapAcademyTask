@@ -16,7 +16,7 @@ const seedData = async () => {
     console.log('Cleared existing data...');
 
     const manager = await User.create({
-      name: 'John Manager',
+      name: 'Arjun Reddy',
       email: 'manager@company.com',
       password: 'manager123',
       role: 'manager',
@@ -27,8 +27,8 @@ const seedData = async () => {
     console.log('✓ Created Manager:', manager.email);
 
     const employee1 = await User.create({
-      name: 'Alice Employee',
-      email: 'alice@company.com',
+      name: 'Sneha Gupta',
+      email: 'sneha@company.com',
       password: 'employee123',
       role: 'employee',
       employeeId: 'EMP001',
@@ -38,8 +38,8 @@ const seedData = async () => {
     console.log('✓ Created Employee 1:', employee1.email);
 
     const employee2 = await User.create({
-      name: 'Bob Employee',
-      email: 'bob@company.com',
+      name: 'Vikram Singh',
+      email: 'vikram@company.com',
       password: 'employee123',
       role: 'employee',
       employeeId: 'EMP002',
@@ -49,8 +49,8 @@ const seedData = async () => {
     console.log('✓ Created Employee 2:', employee2.email);
 
     const employee3 = await User.create({
-      name: 'Charlie Employee',
-      email: 'charlie@company.com',
+      name: 'Ananya Roy',
+      email: 'ananya@company.com',
       password: 'employee123',
       role: 'employee',
       employeeId: 'EMP003',
@@ -63,33 +63,47 @@ const seedData = async () => {
 
     for (let i = 0; i < 7; i++) {
       const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
-      
+
       for (const employee of employees) {
+        // Randomize times slightly
+        const randomCheckInMinute = Math.floor(Math.random() * 30); // 0-29 mins late/early
+        const randomCheckOutMinute = Math.floor(Math.random() * 30);
+
         if (i === 0 || i === 2 || i === 4 || i === 6) {
-          const checkIn = dayjs(date).hour(9).minute(0).second(0).toDate();
-          const checkOut = dayjs(date).hour(18).minute(0).second(0).toDate();
-          
+          // Full day: ~9:00 AM to ~6:00 PM
+          const checkIn = dayjs(date).hour(9).minute(randomCheckInMinute).second(0).toDate();
+          const checkOut = dayjs(date).hour(18).minute(randomCheckOutMinute).second(0).toDate();
+
+          // Calculate actual hours
+          const diffInMs = checkOut - checkIn;
+          const totalHours = parseFloat((diffInMs / (1000 * 60 * 60)).toFixed(2));
+
           await Attendance.create({
             userId: employee._id,
             date,
             checkInTime: checkIn,
             checkOutTime: checkOut,
             status: 'present',
-            totalHours: 9.0,
+            totalHours: totalHours,
           });
         } else if (i === 1) {
-          const checkIn = dayjs(date).hour(9).minute(0).second(0).toDate();
-          const checkOut = dayjs(date).hour(13).minute(0).second(0).toDate();
-          
+          // Half day: ~9:00 AM to ~1:00 PM
+          const checkIn = dayjs(date).hour(9).minute(randomCheckInMinute).second(0).toDate();
+          const checkOut = dayjs(date).hour(13).minute(randomCheckOutMinute).second(0).toDate();
+
+          const diffInMs = checkOut - checkIn;
+          const totalHours = parseFloat((diffInMs / (1000 * 60 * 60)).toFixed(2));
+
           await Attendance.create({
             userId: employee._id,
             date,
             checkInTime: checkIn,
             checkOutTime: checkOut,
             status: 'half-day',
-            totalHours: 4.0,
+            totalHours: totalHours,
           });
         }
+        // Skip some days to simulate absence (i=3, i=5)
       }
     }
 

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import mongoose from 'mongoose';
 import Attendance from '../models/Attendance.js';
 import User from '../models/User.js';
 
@@ -251,16 +252,29 @@ export const all = async (req, res, next) => {
       filter.status = status;
     }
 
-    if (employeeId) {
+    if (employeeId && employeeId.trim() !== '') {
+      const userQuery = [{ employeeId: new RegExp(employeeId, 'i') }]; // Case-insensitive partial match for employeeId
+
+      if (mongoose.Types.ObjectId.isValid(employeeId)) {
+        userQuery.push({ _id: employeeId });
+      }
+
       const user = await User.findOne({
-        $or: [{ employeeId }, { _id: employeeId }],
+        $or: userQuery,
       });
+
       if (user) {
         filter.userId = user._id;
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Employee not found',
+        // If employeeId is provided but not found, we should return empty results
+        // or a specific error. Returning empty results is often safer for filters.
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          total: 0,
+          page: parseInt(page),
+          pages: 0,
+          data: [],
         });
       }
     }
@@ -340,7 +354,7 @@ export const summary = async (req, res, next) => {
 
     const todayPresent = await Attendance.countDocuments({
       date: today,
-      status: 'present',
+      status: { $in: ['present', 'late', 'half-day'] },
     });
 
     const todayAbsent = await User.countDocuments({ role: 'employee' }) - todayPresent;
@@ -503,4 +517,3 @@ export const todayStatus = async (req, res, next) => {
     next(error);
   }
 };
-

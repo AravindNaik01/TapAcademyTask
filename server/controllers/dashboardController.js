@@ -30,7 +30,7 @@ export const employeeDashboard = async (req, res, next) => {
 
     const presentDays = monthAttendance.filter(a => a.status === 'present').length;
     const totalHours = monthAttendance.reduce((sum, a) => sum + (a.totalHours || 0), 0);
-    const avgHours = monthAttendance.length > 0 
+    const avgHours = monthAttendance.length > 0
       ? parseFloat((totalHours / monthAttendance.length).toFixed(2))
       : 0;
 
@@ -68,18 +68,76 @@ export const managerDashboard = async (req, res, next) => {
     const today = getCurrentDate();
     const startOfMonth = dayjs().startOf('month').format('YYYY-MM-DD');
     const endOfMonth = dayjs().endOf('month').format('YYYY-MM-DD');
+    const last7DaysStart = dayjs().subtract(6, 'day').format('YYYY-MM-DD');
 
-    const todayPresent = await Attendance.countDocuments({
-      date: today,
-      status: 'present',
+    // 1. Today's Stats
+    const todayAttendance = await Attendance.find({ date: today }).populate('userId', 'name email employeeId department profileImage');
+
+    const presentCount = todayAttendance.filter(a => a.status === 'present' || a.status === 'late' || a.status === 'half-day').length;
+    const lateCount = todayAttendance.filter(a => a.status === 'late').length;
+
+    const totalEmployees = await User.countDocuments({ role: 'employee' });
+    const absentCount = totalEmployees - presentCount;
+
+    // 2. Absent Employees List
+    const presentUserIds = todayAttendance.map(a => a.userId._id);
+    const absentEmployees = await User.find({
+      role: 'employee',
+      _id: { $nin: presentUserIds }
+    }).select('name email employeeId department profileImage');
+
+    // 3. Weekly Attendance Trend
+    const weeklyTrend = await Attendance.aggregate([
+      {
+        $match: {
+          date: { $gte: last7DaysStart, $lte: today }
+        }
+      },
+      {
+        $group: {
+          _id: '$date',
+          present: { $sum: 1 },
+          late: { $sum: { $cond: [{ $eq: ['$status', 'late'] }, 1, 0] } }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Fill in missing days for the chart
+    const filledWeeklyTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+      const dayData = weeklyTrend.find(d => d._id === date);
+      filledWeeklyTrend.push({
+        date: dayjs(date).format('ddd'), // Mon, Tue, etc.
+        fullDate: date,
+        present: dayData ? dayData.present : 0,
+        late: dayData ? dayData.late : 0,
+      });
+    }
+
+    // 4. Department-wise Attendance (Today)
+    // We need to group the present employees by department
+    const departmentStats = {};
+    todayAttendance.forEach(record => {
+      const dept = record.userId.department || 'Unknown';
+      if (!departmentStats[dept]) {
+        departmentStats[dept] = 0;
+      }
+      departmentStats[dept]++;
     });
 
-    const todayAbsent = await User.countDocuments({ role: 'employee' }) - todayPresent;
+    const departmentChartData = Object.keys(departmentStats).map(dept => ({
+      name: dept,
+      value: departmentStats[dept]
+    }));
 
+    // 5. Month Stats (Existing)
     const monthAttendance = await Attendance.find({
       date: { $gte: startOfMonth, $lte: endOfMonth },
-    }).populate('userId', 'name email employeeId department');
+    });
 
+    // 6. Top Performers (Restored)
     const employeeHours = await Attendance.aggregate([
       {
         $match: {
@@ -126,13 +184,19 @@ export const managerDashboard = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
-        today: {
-          present: todayPresent,
-          absent: todayAbsent,
+        stats: {
+          totalEmployees,
+          present: presentCount,
+          absent: absentCount,
+          late: lateCount,
         },
+        charts: {
+          weeklyTrend: filledWeeklyTrend,
+          department: departmentChartData,
+        },
+        absentEmployees,
         month: {
           totalCheckins: monthAttendance.length,
-          totalEmployees: await User.countDocuments({ role: 'employee' }),
         },
         performers: {
           top: topPerformers,
