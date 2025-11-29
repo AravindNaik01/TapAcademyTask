@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useGetTodayQuery, useGetMySummaryQuery } from './attendanceApi.js'
@@ -11,6 +12,29 @@ const EmployeeDashboard = () => {
 
   const attendance = todayData?.data?.attendance
   const status = todayData?.data?.status || 'not checked in'
+
+  const [liveDuration, setLiveDuration] = useState('0.00')
+
+  useEffect(() => {
+    let interval
+
+    if (status === 'checked in' && attendance?.checkInTime) {
+      const updateTimer = () => {
+        const start = new Date(attendance.checkInTime)
+        const now = new Date()
+        const diff = now - start
+        const hours = diff / (1000 * 60 * 60)
+        setLiveDuration(hours.toFixed(2))
+      }
+
+      updateTimer()
+      interval = setInterval(updateTimer, 1000) // Update every second for better responsiveness
+    } else {
+      setLiveDuration(attendance?.totalHours?.toFixed(2) || '0.00')
+    }
+
+    return () => clearInterval(interval)
+  }, [status, attendance])
 
   if (isLoadingToday || isLoadingSummary) {
     return (
@@ -33,24 +57,35 @@ const EmployeeDashboard = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-2xl font-semibold mb-4">Today's Attendance</h2>
         <div className="mb-4">
-          <p className="text-sm text-gray-600">Status: <span className="font-semibold">{status}</span></p>
+          <p className="text-sm text-gray-600">Status: <span className={`font-bold uppercase ${status === 'checked in' ? 'text-green-600' : status === 'checked out' ? 'text-red-600' : 'text-gray-800'}`}>{status}</span></p>
         </div>
+
+        <div className="mb-6 flex justify-center">
+          <CheckInOutButtons />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-gray-600">Check In</p>
-            <p className="text-xl font-bold">
-              {attendance?.checkInTime ? formatTime(attendance.checkInTime) : 'N/A'}
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <p className="text-sm text-gray-600 mb-1">Check In</p>
+            <p className="text-xl font-bold text-gray-800">
+              {attendance?.checkInTime ? formatTime(attendance.checkInTime) : '--:--'}
             </p>
           </div>
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-gray-600">Check Out</p>
-            <p className="text-xl font-bold">
-              {attendance?.checkOutTime ? formatTime(attendance.checkOutTime) : 'N/A'}
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <p className="text-sm text-gray-600 mb-1">Check Out</p>
+            <p className="text-xl font-bold text-gray-800">
+              {attendance?.checkOutTime ? (
+                formatTime(attendance.checkOutTime)
+              ) : status === 'checked in' ? (
+                <span className="text-green-600 text-base font-medium animate-pulse">In Progress...</span>
+              ) : (
+                '--:--'
+              )}
             </p>
           </div>
-          <div className="border rounded-lg p-4">
-            <p className="text-sm text-gray-600">Total Hours</p>
-            <p className="text-xl font-bold">{attendance?.totalHours || 0} hrs</p>
+          <div className="border rounded-lg p-4 bg-gray-50">
+            <p className="text-sm text-gray-600 mb-1">Total Hours</p>
+            <p className="text-xl font-bold text-blue-600">{liveDuration} <span className="text-sm text-gray-500 font-normal">hrs</span></p>
           </div>
         </div>
 
@@ -107,13 +142,12 @@ const EmployeeDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              record.status === 'present'
-                                ? 'bg-green-100 text-green-800'
-                                : record.status === 'half-day'
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === 'present'
+                              ? 'bg-green-100 text-green-800'
+                              : record.status === 'half-day'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-red-100 text-red-800'
-                            }`}
+                              }`}
                           >
                             {record.status}
                           </span>
@@ -133,23 +167,34 @@ const EmployeeDashboard = () => {
           </div>
 
           {summaryData.data.statistics && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600">Total Present</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                <p className="text-sm text-gray-600 font-medium">Present (This Month)</p>
                 <p className="text-3xl font-bold text-green-600">
                   {summaryData.data.statistics.totalPresent || 0}
                 </p>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600">Half Days</p>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {summaryData.data.statistics.totalHalfDay || 0}
-                </p>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+                <p className="text-sm text-gray-600 font-medium">Late / Half Day</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {(summaryData.data.statistics.totalLate || 0) + (summaryData.data.statistics.totalHalfDay || 0)}
+                  </p>
+                  <span className="text-xs text-gray-500">
+                    ({summaryData.data.statistics.totalLate || 0} Late, {summaryData.data.statistics.totalHalfDay || 0} Half-Day)
+                  </span>
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <p className="text-sm text-gray-600">Absent</p>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+                <p className="text-sm text-gray-600 font-medium">Absent (This Month)</p>
                 <p className="text-3xl font-bold text-red-600">
                   {summaryData.data.statistics.totalAbsent || 0}
+                </p>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <p className="text-sm text-gray-600 font-medium">Total Hours (This Month)</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {summaryData.data.statistics.totalHoursWorked || 0}
                 </p>
               </div>
             </div>

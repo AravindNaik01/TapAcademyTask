@@ -6,13 +6,13 @@ const escapeCSVField = (field) => {
   if (field === null || field === undefined) {
     return '';
   }
-  
+
   const str = String(field);
-  
+
   if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
-  
+
   return str;
 };
 
@@ -41,7 +41,7 @@ export const checkin = async (req, res, next) => {
       userId: req.user._id,
       date: today,
       checkInTime: new Date(),
-      status: 'present',
+      // status handled by pre-save hook
     });
 
     res.status(201).json({
@@ -127,34 +127,69 @@ export const mySummary = async (req, res, next) => {
       date: today,
     });
 
-    const sevenDaysAgo = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
-    const last7Days = await Attendance.find({
+    const startOfMonth = dayjs().startOf('month').format('YYYY-MM-DD');
+    const endOfMonth = dayjs().endOf('month').format('YYYY-MM-DD');
+
+    // Fetch all records for the month
+    const monthAttendance = await Attendance.find({
       userId: req.user._id,
-      date: { $gte: sevenDaysAgo },
+      date: { $gte: startOfMonth, $lte: endOfMonth },
     }).sort({ date: -1 });
 
-    const totalPresent = await Attendance.countDocuments({
-      userId: req.user._id,
-      status: 'present',
+    const last7Days = monthAttendance.slice(0, 7);
+
+    // Calculate stats from the fetched records
+    let totalPresent = 0;
+    let totalLate = 0;
+    let totalHalfDay = 0;
+    let totalHoursWorked = 0;
+    let explicitAbsent = 0;
+
+    // Set of dates that have records
+    const recordedDates = new Set();
+
+    monthAttendance.forEach(record => {
+      recordedDates.add(record.date);
+      if (record.status === 'present') totalPresent++;
+      else if (record.status === 'late') totalLate++;
+      else if (record.status === 'half-day') totalHalfDay++;
+      else if (record.status === 'absent') explicitAbsent++;
+
+      totalHoursWorked += record.totalHours || 0;
     });
-    const totalAbsent = await Attendance.countDocuments({
-      userId: req.user._id,
-      status: 'absent',
-    });
-    const totalHalfDay = await Attendance.countDocuments({
-      userId: req.user._id,
-      status: 'half-day',
-    });
+
+    // Calculate Implicit Absent Days (Past weekdays with no record)
+    let implicitAbsent = 0;
+    const todayDate = dayjs();
+    let currentDate = dayjs().startOf('month');
+
+    // Iterate until yesterday
+    while (currentDate.isBefore(todayDate, 'day')) {
+      const dateStr = currentDate.format('YYYY-MM-DD');
+      const dayOfWeek = currentDate.day(); // 0 is Sunday, 6 is Saturday
+
+      // If it's a weekday and no record exists
+      if (dayOfWeek !== 0 && dayOfWeek !== 6 && !recordedDates.has(dateStr)) {
+        implicitAbsent++;
+      }
+
+      currentDate = currentDate.add(1, 'day');
+    }
+
+    const totalAbsent = explicitAbsent + implicitAbsent;
 
     res.status(200).json({
       success: true,
       data: {
         today: todayAttendance,
         last7Days,
+        monthAttendance, // Required for the Calendar view
         statistics: {
           totalPresent,
           totalAbsent,
           totalHalfDay,
+          totalLate,
+          totalHoursWorked: parseFloat(totalHoursWorked.toFixed(2)),
         },
       },
     });
@@ -437,7 +472,7 @@ export const todayStatus = async (req, res, next) => {
     const result = employees.map(employee => {
       const attendance = attendanceMap.get(employee._id.toString());
       let status = 'absent';
-      
+
       if (attendance) {
         if (attendance.checkOutTime) {
           status = 'checked-out';

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useLoginMutation } from './authApi.js'
 import { setCredentials } from './authSlice.js'
 
@@ -13,8 +13,15 @@ const Login = () => {
 
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useSelector((state) => state.auth)
   const [login, { isLoading }] = useLoginMutation()
+
+  // Get role from navigation state (if available)
+  const role = location.state?.role
+  const title = role
+    ? `${role.charAt(0).toUpperCase() + role.slice(1)} Sign In`
+    : 'Sign in to your account'
 
   useEffect(() => {
     if (user) {
@@ -44,6 +51,12 @@ const Login = () => {
 
     try {
       const result = await login(formData).unwrap()
+
+      if (role && result.data.role !== role) {
+        setErrors({ submit: `Please login with ${role} credentials` })
+        return
+      }
+
       dispatch(
         setCredentials({
           user: result.data,
@@ -61,7 +74,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            {title}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

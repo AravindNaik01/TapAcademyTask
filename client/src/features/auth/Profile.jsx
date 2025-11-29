@@ -12,17 +12,19 @@ const Profile = () => {
     skip: !accessToken, // Skip query if no token
   })
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation()
-  
+
+  const user = meData?.data || userFromStore
+
   const [formData, setFormData] = useState({
     name: '',
     department: '',
   })
-  
   const [errors, setErrors] = useState({})
   const [isEditing, setIsEditing] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  const user = meData?.data || userFromStore
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
 
   useEffect(() => {
     if (user) {
@@ -30,8 +32,21 @@ const Profile = () => {
         name: user.name || '',
         department: user.department || '',
       })
+      if (user.profileImage) {
+        // Construct full URL for image
+        const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'
+        setImagePreview(`${baseUrl}${user.profileImage}`)
+      }
     }
   }, [user])
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setImageFile(file)
+      setImagePreview(URL.createObjectURL(file))
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -66,10 +81,14 @@ const Profile = () => {
     }
 
     try {
-      const result = await updateProfile({
-        name: formData.name.trim(),
-        department: formData.department.trim(),
-      }).unwrap()
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name.trim())
+      formDataToSend.append('department', formData.department.trim())
+      if (imageFile) {
+        formDataToSend.append('image', imageFile)
+      }
+
+      const result = await updateProfile(formDataToSend).unwrap()
 
       // Update Redux store with new user data
       const currentToken = accessToken || localStorage.getItem('accessToken')
@@ -83,7 +102,8 @@ const Profile = () => {
       setSuccessMessage('Profile updated successfully!')
       setIsEditing(false)
       setErrors({})
-      
+      setImageFile(null)
+
       // Clear success message after 5 seconds
       setTimeout(() => {
         setSuccessMessage('')
@@ -106,7 +126,14 @@ const Profile = () => {
         name: user.name || '',
         department: user.department || '',
       })
+      if (user.profileImage) {
+        const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000'
+        setImagePreview(`${baseUrl}${user.profileImage}`)
+      } else {
+        setImagePreview(null)
+      }
     }
+    setImageFile(null)
     setIsEditing(false)
     setErrors({})
     setSuccessMessage('')
@@ -114,7 +141,7 @@ const Profile = () => {
 
   const hasChanges = () => {
     if (!user) return false
-    return formData.name !== user.name || formData.department !== user.department
+    return formData.name !== user.name || formData.department !== user.department || imageFile !== null
   }
 
   if (isLoading) {
@@ -155,7 +182,7 @@ const Profile = () => {
         </div>
       )
     }
-    
+
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
@@ -179,6 +206,7 @@ const Profile = () => {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
 
+        {/* ... (success/error messages) */}
         {successMessage && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
             <p className="text-green-800 font-medium flex items-center">
@@ -208,6 +236,43 @@ const Profile = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Image */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative h-32 w-32 mb-4">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Profile"
+                    className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                ) : (
+                  <div className="h-32 w-32 rounded-full bg-indigo-100 flex items-center justify-center border-4 border-white shadow-lg">
+                    <span className="text-4xl text-indigo-500 font-bold">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : '?'}
+                    </span>
+                  </div>
+                )}
+                {isEditing && (
+                  <label
+                    htmlFor="image-upload"
+                    className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 shadow-md transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              {isEditing && <p className="text-sm text-gray-500">Click the pencil icon to upload a new photo</p>}
+            </div>
+
             {/* Name Field */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -220,11 +285,10 @@ const Profile = () => {
                 value={formData.name}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                  isEditing
-                    ? 'border-gray-300'
-                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                } ${errors.name ? 'border-red-500' : ''}`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
+                  ? 'border-gray-300'
+                  : 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                  } ${errors.name ? 'border-red-500' : ''}`}
                 placeholder="Enter your full name"
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -274,11 +338,10 @@ const Profile = () => {
                 value={formData.department}
                 onChange={handleChange}
                 disabled={!isEditing}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                  isEditing
-                    ? 'border-gray-300'
-                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                } ${errors.department ? 'border-red-500' : ''}`}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
+                  ? 'border-gray-300'
+                  : 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                  } ${errors.department ? 'border-red-500' : ''}`}
                 placeholder="Enter your department"
               />
               {errors.department && <p className="text-red-500 text-sm mt-1">{errors.department}</p>}
@@ -301,11 +364,10 @@ const Profile = () => {
                 <button
                   type="submit"
                   disabled={isUpdating || !hasChanges()}
-                  className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                    isUpdating || !hasChanges()
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
+                  className={`px-6 py-2 rounded-md font-medium transition-colors ${isUpdating || !hasChanges()
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
                 >
                   {isUpdating ? (
                     <span className="inline-flex items-center">
@@ -369,10 +431,10 @@ const Profile = () => {
               <span className="text-gray-900">
                 {user?.createdAt
                   ? new Date(user.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
                   : 'N/A'}
               </span>
             </div>

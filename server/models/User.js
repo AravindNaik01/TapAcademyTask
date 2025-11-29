@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
     },
     employeeId: {
       type: String,
-      required: [true, 'Employee ID is required'],
+      required: false,
       unique: true,
       trim: true,
     },
@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Department is required'],
       trim: true,
     },
+    profileImage: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,
@@ -43,6 +47,41 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function (next) {
+  // Auto-generate employeeId if not provided
+  if (!this.employeeId) {
+    const rolePrefix = this.role === 'manager' ? 'MGR' : 'EMP';
+    let employeeId;
+    let isUnique = false;
+    let counter = 1;
+
+    while (!isUnique) {
+      // Get count of existing users with similar pattern
+      const UserModel = this.constructor;
+      const existingCount = await UserModel.countDocuments({
+        employeeId: new RegExp(`^${rolePrefix}`, 'i')
+      }) || 0;
+
+      // Generate employee ID: MGR001, EMP001, etc.
+      const numPart = String(existingCount + counter).padStart(3, '0');
+      employeeId = `${rolePrefix}${numPart}`;
+
+      // Check if it's unique (exclude current document if updating)
+      const query = { employeeId };
+      if (!this.isNew) {
+        query._id = { $ne: this._id };
+      }
+      const exists = await UserModel.findOne(query);
+      if (!exists) {
+        isUnique = true;
+      } else {
+        counter++;
+      }
+    }
+
+    this.employeeId = employeeId;
+  }
+
+  // Hash password if modified
   if (!this.isModified('password')) {
     return next();
   }

@@ -117,11 +117,10 @@ const CheckInOutButtons = () => {
           <button
             onClick={handleCheckOut}
             disabled={isCheckingOut}
-            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
-              isCheckingOut
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-red-500 hover:bg-red-600 text-white transform hover:scale-105'
-            }`}
+            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${isCheckingOut
+              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+              : 'bg-red-500 hover:bg-red-600 text-white transform hover:scale-105'
+              }`}
           >
             {isCheckingOut ? (
               <span className="inline-flex items-center">
@@ -164,87 +163,67 @@ const CheckInOutButtons = () => {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <button
-        onClick={handleCheckIn}
-        disabled={!canCheckIn || isCheckingIn}
-        className={`flex-1 py-4 px-6 rounded-lg font-semibold text-lg transition-all transform ${
-          canCheckIn && !isCheckingIn
-            ? 'bg-green-500 hover:bg-green-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-        }`}
-      >
-        {isCheckingIn ? (
+    <div className="flex justify-center w-full">
+      {status === 'not checked in' && (
+        <button
+          onClick={handleCheckIn}
+          disabled={isCheckingIn}
+          className={`w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-lg font-semibold text-lg transition-all transform ${!isCheckingIn
+              ? 'bg-green-500 hover:bg-green-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+        >
+          {isCheckingIn ? (
+            <span className="inline-flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Checking In...
+            </span>
+          ) : (
+            <span className="inline-flex items-center justify-center">
+              <span className="mr-2">✓</span> Check In
+            </span>
+          )}
+        </button>
+      )}
+
+      {status === 'checked in' && (
+        <button
+          onClick={confirmCheckOut}
+          disabled={isCheckingOut}
+          className={`w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-lg font-semibold text-lg transition-all transform ${!isCheckingOut
+              ? 'bg-red-500 hover:bg-red-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+        >
+          {isCheckingOut ? (
+            <span className="inline-flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Checking Out...
+            </span>
+          ) : (
+            <span className="inline-flex items-center justify-center">
+              <span className="mr-2">✓✓</span> Check Out
+            </span>
+          )}
+        </button>
+      )}
+
+      {status === 'checked out' && (
+        <button
+          disabled
+          className="w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-lg font-semibold text-lg bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200"
+        >
           <span className="inline-flex items-center justify-center">
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Checking In...
+            <span className="mr-2">✓</span> Attendance Completed
           </span>
-        ) : (
-          <span className="inline-flex items-center justify-center">
-            <span className="mr-2">✓</span>
-            Check In
-          </span>
-        )}
-      </button>
-      <button
-        onClick={canCheckOut ? confirmCheckOut : undefined}
-        disabled={!canCheckOut || isCheckingOut}
-        className={`flex-1 py-4 px-6 rounded-lg font-semibold text-lg transition-all transform ${
-          canCheckOut && !isCheckingOut
-            ? 'bg-red-500 hover:bg-red-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-        }`}
-      >
-        {isCheckingOut ? (
-          <span className="inline-flex items-center justify-center">
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Checking Out...
-          </span>
-        ) : (
-          <span className="inline-flex items-center justify-center">
-            <span className="mr-2">✓✓</span>
-            Check Out
-          </span>
-        )}
-      </button>
+        </button>
+      )}
     </div>
   )
 }

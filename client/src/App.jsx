@@ -1,9 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import Login from './features/auth/Login.jsx'
 import Register from './features/auth/Register.jsx'
 import EmployeeDashboard from './features/attendance/EmployeeDashboard.jsx'
-import MarkAttendance from './features/attendance/MarkAttendance.jsx'
+
 import MyHistory from './features/attendance/MyHistory.jsx'
 import Profile from './features/auth/Profile.jsx'
 import ManagerDashboard from './features/attendance/ManagerDashboard.jsx'
@@ -13,18 +13,20 @@ import Reports from './features/attendance/Reports.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import NavBar from './components/Layout/NavBar.jsx'
 import Toast from './components/Toast.jsx'
+import Home from './pages/Home.jsx'
 
 function App() {
   const { user } = useSelector((state) => state.auth)
+  const location = useLocation()
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {user && <NavBar />}
+      {user && location.pathname !== '/' && <NavBar />}
       <Toast />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
+
         <Route
           path="/employee/dashboard"
           element={
@@ -33,14 +35,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/employee/mark-attendance"
-          element={
-            <ProtectedRoute requiredRole="employee">
-              <MarkAttendance />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/employee/history"
           element={
@@ -57,7 +52,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/manager/dashboard"
           element={
@@ -90,15 +85,10 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/"
-          element={
-            <Navigate
-              to={user?.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'}
-              replace
-            />
-          }
+          element={<Home />}
         />
       </Routes>
     </div>

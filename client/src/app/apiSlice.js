@@ -2,18 +2,24 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  prepareHeaders: (headers, { getState }) => {
+  prepareHeaders: (headers, { getState, endpoint }) => {
     // Try to get token from Redux state first
     let token = getState().auth.accessToken
-    
+
     // Fallback to localStorage if not in Redux state
     if (!token) {
       token = localStorage.getItem('accessToken')
     }
-    
+
     if (token) {
       headers.set('authorization', `Bearer ${token}`)
     }
+
+    // For file uploads (updateProfile), let the browser set the Content-Type with boundary
+    if (endpoint === 'updateProfile') {
+      headers.delete('Content-Type')
+    }
+
     return headers
   },
   credentials: 'include', // Include cookies for refresh token
@@ -22,7 +28,7 @@ const baseQuery = fetchBaseQuery({
 // Custom baseQuery with error handling
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions)
-  
+
   if (result.error && result.error.status === 401) {
     // Try to refresh token using refresh endpoint
     const refreshResult = await baseQuery(
@@ -30,7 +36,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
       api,
       extraOptions
     )
-    
+
     if (refreshResult.data) {
       // Store new access token
       const { accessToken } = refreshResult.data.data
@@ -46,7 +52,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
       window.location.href = '/login'
     }
   }
-  
+
   return result
 }
 
