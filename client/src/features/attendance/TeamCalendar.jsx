@@ -39,7 +39,7 @@ const TeamCalendar = () => {
   const getDateAttendance = (date) => {
     const dateStr = date
     const dayAttendance = attendance.filter((record) => record.date === dateStr)
-    const present = dayAttendance.filter((r) => r.status === 'present').length
+    const present = dayAttendance.filter((r) => ['present', 'late', 'half-day'].includes(r.status)).length
     const absent = dayAttendance.filter((r) => r.status === 'absent').length
     return { present, absent, total: dayAttendance.length }
   }
@@ -162,13 +162,12 @@ const TeamCalendar = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              record.status === 'present'
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === 'present'
                                 ? 'bg-green-100 text-green-800'
                                 : record.status === 'half-day'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
                           >
                             {record.status}
                           </span>
