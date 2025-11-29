@@ -126,4 +126,6 @@ const seedData = async () => {
   }
 };
 
+
 seedData();
+
