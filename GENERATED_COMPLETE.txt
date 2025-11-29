@@ -1,0 +1,6 @@
+Complete React + Vite frontend application generated with RTK Query integration.
+
+All files have been created in the client/ directory. Run: cd client && npm install && npm run dev
+
+Note: Backend must run at VITE_API_URL (default http://localhost:5000/api) and support refresh token cookies.
+

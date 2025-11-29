@@ -1,14 +1,10 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-/**
- * Middleware to protect routes - verifies JWT token
- */
 export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in Authorization header
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -21,10 +17,7 @@ export const protect = async (req, res, next) => {
     }
 
     try {
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
-      // Get user from token
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
@@ -50,23 +43,6 @@ export const protect = async (req, res, next) => {
   }
 };
 
-/**
- * Middleware to restrict routes to managers only
- */
-export const managerOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'manager') {
-    next();
-  } else {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. Manager role required.',
-    });
-  }
-};
-
-/**
- * Middleware to restrict routes to employees only
- */
 export const employeeOnly = (req, res, next) => {
   if (req.user && req.user.role === 'employee') {
     next();
@@ -78,3 +54,13 @@ export const employeeOnly = (req, res, next) => {
   }
 };
 
+export const managerOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'manager') {
+    next();
+  } else {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Manager role required.',
+    });
+  }
+};

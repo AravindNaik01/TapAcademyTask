@@ -10,7 +10,6 @@ const attendanceSchema = new mongoose.Schema(
     date: {
       type: String,
       required: [true, 'Date is required'],
-      // Format: YYYY-MM-DD
     },
     checkInTime: {
       type: Date,
@@ -22,13 +21,12 @@ const attendanceSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['present', 'absent', 'half-day'],
+      enum: ['present', 'absent', 'late', 'half-day'],
       default: 'present',
     },
     totalHours: {
       type: Number,
       default: 0,
-      // Stored in hours (decimal format, e.g., 8.5 for 8 hours 30 minutes)
     },
   },
   {
@@ -36,17 +34,14 @@ const attendanceSchema = new mongoose.Schema(
   }
 );
 
-// Compound index to prevent duplicate check-ins on same day
 attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
 
-// Calculate total hours before saving if checkout time exists
 attendanceSchema.pre('save', function (next) {
   if (this.checkOutTime && this.checkInTime) {
     const diffInMs = this.checkOutTime - this.checkInTime;
-    const diffInHours = diffInMs / (1000 * 60 * 60); // Convert milliseconds to hours
+    const diffInHours = diffInMs / (1000 * 60 * 60);
     this.totalHours = parseFloat(diffInHours.toFixed(2));
     
-    // Update status based on total hours
     if (this.totalHours < 4) {
       this.status = 'half-day';
     } else {
@@ -59,4 +54,3 @@ attendanceSchema.pre('save', function (next) {
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 
 export default Attendance;
-

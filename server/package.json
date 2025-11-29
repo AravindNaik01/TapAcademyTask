@@ -1,7 +1,7 @@
 {
   "name": "employee-attendance-server",
   "version": "1.0.0",
-  "description": "Backend server for Employee Attendance Management System",
+  "description": "Employee Attendance Management System Backend",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -18,10 +18,11 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "dotenv": "^16.3.1",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.10",
+    "cookie-parser": "^1.4.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
   }
 }
-

@@ -2,21 +2,19 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
+import dayjs from 'dayjs';
 
 dotenv.config();
 
 const seedData = async () => {
   try {
-    // Connect to database
     await connectDB();
 
-    // Clear existing data (optional - remove if you want to keep existing data)
     await User.deleteMany({});
     await Attendance.deleteMany({});
 
     console.log('Cleared existing data...');
 
-    // Create Manager
     const manager = await User.create({
       name: 'John Manager',
       email: 'manager@company.com',
@@ -28,7 +26,6 @@ const seedData = async () => {
 
     console.log('✓ Created Manager:', manager.email);
 
-    // Create Employee 1
     const employee1 = await User.create({
       name: 'Alice Employee',
       email: 'alice@company.com',
@@ -40,7 +37,6 @@ const seedData = async () => {
 
     console.log('✓ Created Employee 1:', employee1.email);
 
-    // Create Employee 2
     const employee2 = await User.create({
       name: 'Bob Employee',
       email: 'bob@company.com',
@@ -52,94 +48,62 @@ const seedData = async () => {
 
     console.log('✓ Created Employee 2:', employee2.email);
 
-    // Generate dates for last 2 days
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const dayBefore = new Date(today);
-    dayBefore.setDate(dayBefore.getDate() - 2);
-
-    const formatDate = (date) => date.toISOString().split('T')[0];
-
-    // Create sample attendance for Employee 1 - Yesterday
-    const emp1Yesterday = new Date(yesterday);
-    emp1Yesterday.setHours(9, 0, 0, 0);
-    const emp1YesterdayOut = new Date(yesterday);
-    emp1YesterdayOut.setHours(18, 0, 0, 0);
-
-    await Attendance.create({
-      userId: employee1._id,
-      date: formatDate(yesterday),
-      checkInTime: emp1Yesterday,
-      checkOutTime: emp1YesterdayOut,
-      status: 'present',
-      totalHours: 9.0,
+    const employee3 = await User.create({
+      name: 'Charlie Employee',
+      email: 'charlie@company.com',
+      password: 'employee123',
+      role: 'employee',
+      employeeId: 'EMP003',
+      department: 'Marketing',
     });
 
-    console.log('✓ Created attendance for Employee 1 - Yesterday');
+    console.log('✓ Created Employee 3:', employee3.email);
 
-    // Create sample attendance for Employee 1 - Day before
-    const emp1DayBefore = new Date(dayBefore);
-    emp1DayBefore.setHours(9, 30, 0, 0);
-    const emp1DayBeforeOut = new Date(dayBefore);
-    emp1DayBeforeOut.setHours(17, 30, 0, 0);
+    const employees = [employee1, employee2, employee3];
 
-    await Attendance.create({
-      userId: employee1._id,
-      date: formatDate(dayBefore),
-      checkInTime: emp1DayBefore,
-      checkOutTime: emp1DayBeforeOut,
-      status: 'present',
-      totalHours: 8.0,
-    });
+    for (let i = 0; i < 7; i++) {
+      const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
+      
+      for (const employee of employees) {
+        if (i === 0 || i === 2 || i === 4 || i === 6) {
+          const checkIn = dayjs(date).hour(9).minute(0).second(0).toDate();
+          const checkOut = dayjs(date).hour(18).minute(0).second(0).toDate();
+          
+          await Attendance.create({
+            userId: employee._id,
+            date,
+            checkInTime: checkIn,
+            checkOutTime: checkOut,
+            status: 'present',
+            totalHours: 9.0,
+          });
+        } else if (i === 1) {
+          const checkIn = dayjs(date).hour(9).minute(0).second(0).toDate();
+          const checkOut = dayjs(date).hour(13).minute(0).second(0).toDate();
+          
+          await Attendance.create({
+            userId: employee._id,
+            date,
+            checkInTime: checkIn,
+            checkOutTime: checkOut,
+            status: 'half-day',
+            totalHours: 4.0,
+          });
+        }
+      }
+    }
 
-    console.log('✓ Created attendance for Employee 1 - Day before');
-
-    // Create sample attendance for Employee 2 - Yesterday
-    const emp2Yesterday = new Date(yesterday);
-    emp2Yesterday.setHours(9, 15, 0, 0);
-    const emp2YesterdayOut = new Date(yesterday);
-    emp2YesterdayOut.setHours(17, 45, 0, 0);
-
-    await Attendance.create({
-      userId: employee2._id,
-      date: formatDate(yesterday),
-      checkInTime: emp2Yesterday,
-      checkOutTime: emp2YesterdayOut,
-      status: 'present',
-      totalHours: 8.5,
-    });
-
-    console.log('✓ Created attendance for Employee 2 - Yesterday');
-
-    // Create sample attendance for Employee 2 - Day before (half day)
-    const emp2DayBefore = new Date(dayBefore);
-    emp2DayBefore.setHours(9, 0, 0, 0);
-    const emp2DayBeforeOut = new Date(dayBefore);
-    emp2DayBeforeOut.setHours(13, 0, 0, 0);
-
-    await Attendance.create({
-      userId: employee2._id,
-      date: formatDate(dayBefore),
-      checkInTime: emp2DayBefore,
-      checkOutTime: emp2DayBeforeOut,
-      status: 'half-day',
-      totalHours: 4.0,
-    });
-
-    console.log('✓ Created attendance for Employee 2 - Day before (half day)');
+    console.log('✓ Created 7 days of attendance records for each employee');
 
     console.log('\n✅ Seed data created successfully!');
     console.log('\n📋 Test Credentials:');
     console.log('Manager:');
     console.log('  Email: manager@company.com');
     console.log('  Password: manager123');
-    console.log('\nEmployee 1:');
-    console.log('  Email: alice@company.com');
-    console.log('  Password: employee123');
-    console.log('\nEmployee 2:');
-    console.log('  Email: bob@company.com');
-    console.log('  Password: employee123');
+    console.log('\nEmployees:');
+    console.log('  Email: alice@company.com / Password: employee123');
+    console.log('  Email: bob@company.com / Password: employee123');
+    console.log('  Email: charlie@company.com / Password: employee123');
 
     process.exit(0);
   } catch (error) {
@@ -149,4 +113,3 @@ const seedData = async () => {
 };
 
 seedData();
-

@@ -2,17 +2,20 @@ import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, user } = useSelector((state) => state.auth)
+  const { user, accessToken } = useSelector((state) => state.auth)
+  
+  // Check localStorage as fallback
+  const token = accessToken || localStorage.getItem('accessToken')
+  const storedUser = user || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null)
 
-  if (!isAuthenticated) {
+  if (!token || !storedUser) {
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to appropriate dashboard based on role
+  if (requiredRole && storedUser.role !== requiredRole) {
     return (
       <Navigate
-        to={user?.role === 'manager' ? '/manager' : '/dashboard'}
+        to={storedUser.role === 'manager' ? '/manager/dashboard' : '/employee/dashboard'}
         replace
       />
     )
@@ -22,4 +25,3 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 }
 
 export default ProtectedRoute
-
