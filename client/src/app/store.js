@@ -18,7 +18,7 @@ const loadInitialAuthState = () => {
   try {
     const user = localStorage.getItem('user')
     const accessToken = localStorage.getItem('accessToken')
-    
+
     return {
       user: user ? JSON.parse(user) : null,
       accessToken: accessToken || null,
@@ -41,5 +41,10 @@ export const store = configureStore({
     auth: loadInitialAuthState(),
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiSlice.middleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['api/executeQuery/fulfilled', 'api/executeQuery/rejected'],
+        ignoredPaths: ['api.queries', 'api.mutations'],
+      },
+    }).concat(apiSlice.middleware),
 })

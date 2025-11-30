@@ -58,6 +58,9 @@ export const attendanceApi = apiSlice.injectEndpoints({
         url: '/attendance/export',
         params: { startDate, endDate, employeeId, status },
         responseHandler: async (response) => {
+          if (!response.ok) {
+            return response.json()
+          }
           const blob = await response.blob()
           return { data: blob, type: response.headers.get('content-type') }
         },
