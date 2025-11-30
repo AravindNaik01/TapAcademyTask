@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useGetManagerDashboardQuery } from './attendanceApi.js'
+import { useGetManagerDashboardQuery, useGetDepartmentStatsQuery } from './attendanceApi.js'
 import {
   BarChart,
   Bar,
@@ -70,7 +71,11 @@ const CustomPieTooltip = ({ active, payload }) => {
 }
 
 const ManagerDashboard = () => {
+  const [filterType, setFilterType] = useState('daily')
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+
   const { data, isLoading, error } = useGetManagerDashboardQuery()
+  const { data: departmentStats } = useGetDepartmentStatsQuery({ type: filterType, date: selectedDate })
 
   if (isLoading) {
     return (
@@ -228,29 +233,58 @@ const ManagerDashboard = () => {
 
         {/* Department Chart */}
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Department-wise Attendance</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={charts?.department || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {(charts?.department || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomPieTooltip />} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Department-wise Attendance</h3>
+            <div className="flex gap-2">
+              <select
+                className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+              {filterType === 'daily' && (
+                <input
+                  type="date"
+                  className="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              )}
+            </div>
+          </div>
+          <div className="h-80 flex items-center justify-center">
+            {departmentStats?.data && departmentStats.data.some(d => d.value > 0) ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={departmentStats.data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {departmentStats.data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomPieTooltip />} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-gray-500">
+                <p className="text-lg font-medium">No Data Available</p>
+                <p className="text-sm">No attendance records found for this period.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

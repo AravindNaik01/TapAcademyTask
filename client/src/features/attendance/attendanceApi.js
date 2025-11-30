@@ -71,6 +71,13 @@ export const attendanceApi = apiSlice.injectEndpoints({
       query: () => '/dashboard/manager',
       providesTags: ['Dashboard'],
     }),
+    getDepartmentStats: builder.query({
+      query: ({ type, date }) => ({
+        url: '/dashboard/manager/department-stats',
+        params: { type, date },
+      }),
+      providesTags: ['Dashboard'],
+    }),
   }),
 })
 
@@ -87,5 +94,6 @@ export const {
   useLazyExportCsvQuery,
   useGetEmployeeDashboardQuery,
   useGetManagerDashboardQuery,
+  useGetDepartmentStatsQuery,
 } = attendanceApi
 

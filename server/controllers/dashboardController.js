@@ -271,3 +271,117 @@ export const managerDashboard = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getDepartmentStats = async (req, res, next) => {
+  try {
+    const { type, date } = req.query;
+    const targetDate = date ? dayjs(date) : dayjs();
+    let startDate, endDate;
+
+    switch (type) {
+      case 'weekly':
+        startDate = targetDate.startOf('week').format('YYYY-MM-DD');
+        endDate = targetDate.endOf('week').format('YYYY-MM-DD');
+        break;
+      case 'monthly':
+        startDate = targetDate.startOf('month').format('YYYY-MM-DD');
+        endDate = targetDate.endOf('month').format('YYYY-MM-DD');
+        break;
+      case 'yearly':
+        startDate = targetDate.startOf('year').format('YYYY-MM-DD');
+        endDate = targetDate.endOf('year').format('YYYY-MM-DD');
+        break;
+      case 'daily':
+      default:
+        startDate = targetDate.format('YYYY-MM-DD');
+        endDate = targetDate.format('YYYY-MM-DD');
+        break;
+    }
+
+    // 1. Fetch all employees with their join date
+    const allEmployees = await User.find({ role: 'employee' }).select('department createdAt');
+
+    // 2. Initialize stats map
+    const statsByDept = {};
+    // Pre-fill departments from employees to ensure we have all of them
+    allEmployees.forEach(emp => {
+      if (!statsByDept[emp.department]) {
+        statsByDept[emp.department] = { totalManDays: 0, present: 0 };
+      }
+    });
+
+    // 3. Calculate Total Man-Days (Capacity)
+    let current = dayjs(startDate);
+    const end = dayjs(endDate);
+    const today = dayjs(); // Don't count future days
+
+    while (current.isBefore(end) || current.isSame(end, 'day')) {
+      // Stop if we are trying to calculate for future days
+      if (current.isAfter(today, 'day')) {
+        break;
+      }
+
+      const isHoliday = current.day() === 0; // Sunday
+
+      if (!isHoliday) {
+        // Count employees active on this day
+        allEmployees.forEach(emp => {
+          const joinedAt = dayjs(emp.createdAt);
+          // Check if employee existed on this day
+          if (joinedAt.isBefore(current.endOf('day'))) {
+            const dept = emp.department;
+            if (statsByDept[dept]) {
+              statsByDept[dept].totalManDays++;
+            }
+          }
+        });
+      }
+      current = current.add(1, 'day');
+    }
+
+    // 4. Get attendance for the period
+    const attendanceRecords = await Attendance.find({
+      date: { $gte: startDate, $lte: endDate }
+    }).populate('userId', 'department');
+
+    // 5. Aggregate Present counts
+    attendanceRecords.forEach(record => {
+      // Only count if user still exists (populated)
+      if (record.userId && record.userId.department) {
+        const dept = record.userId.department;
+        // Ensure dept exists in stats (in case of data inconsistency)
+        if (!statsByDept[dept]) statsByDept[dept] = { totalManDays: 0, present: 0 };
+
+        statsByDept[dept].present++;
+      }
+    });
+
+    // 6. Format response
+    const departmentStats = Object.keys(statsByDept).map(deptName => {
+      const { totalManDays, present } = statsByDept[deptName];
+
+      // Ensure Total is at least equal to Present.
+      // This handles cases like Sundays (where totalManDays is 0 but people might work)
+      // or data inconsistencies.
+      const adjustedTotal = Math.max(totalManDays, present);
+
+      // Absent cannot be negative
+      const absent = Math.max(0, adjustedTotal - present);
+
+      return {
+        name: deptName,
+        value: present,
+        total: adjustedTotal,
+        present: present,
+        absent: absent
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: departmentStats
+    });
+  } catch (error) {
+    next(error);
+  }
+};
