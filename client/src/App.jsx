@@ -15,13 +15,14 @@ import NavBar from './components/Layout/NavBar.jsx'
 import Toast from './components/Toast.jsx'
 import Home from './pages/Home.jsx'
 import EmployeeLayout from './components/Layout/EmployeeLayout.jsx'
+import ManagerLayout from './components/Layout/ManagerLayout.jsx'
 
 function App() {
   const { user } = useSelector((state) => state.auth)
   const location = useLocation()
 
-  // Hide NavBar for home page and all employee routes (since they have their own sidebar)
-  const shouldShowNavBar = user && location.pathname !== '/' && !location.pathname.startsWith('/employee')
+  // Hide NavBar for home page and all employee/manager routes (since they have their own sidebar)
+  const shouldShowNavBar = user && location.pathname !== '/' && !location.pathname.startsWith('/employee') && !location.pathname.startsWith('/manager')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,55 +40,15 @@ function App() {
           <Route path="/employee/profile" element={<Profile />} />
         </Route>
 
-        {/* Manager Routes */}
-        <Route
-          path="/manager/dashboard"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <ManagerDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager/attendance/all"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <AllAttendance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager/attendance"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <AllAttendance />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager/attendance/:id"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <EmployeeAttendanceDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager/calendar"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <TeamCalendar />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/manager/reports"
-          element={
-            <ProtectedRoute requiredRole="manager">
-              <Reports />
-            </ProtectedRoute>
-          }
-        />
+        {/* Manager Routes with Sidebar Layout */}
+        <Route element={<ProtectedRoute requiredRole="manager"><ManagerLayout /></ProtectedRoute>}>
+          <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+          <Route path="/manager/attendance/all" element={<AllAttendance />} />
+          <Route path="/manager/attendance" element={<AllAttendance />} />
+          <Route path="/manager/attendance/:id" element={<EmployeeAttendanceDetails />} />
+          <Route path="/manager/calendar" element={<TeamCalendar />} />
+          <Route path="/manager/reports" element={<Reports />} />
+        </Route>
 
         <Route
           path="/"
