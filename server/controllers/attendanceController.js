@@ -421,12 +421,28 @@ export const exportAttendance = async (req, res, next) => {
       filter.status = status;
     }
 
+    const headers = ['Date', 'Employee ID', 'Name', 'Email', 'Department', 'Check In', 'Check Out', 'Total Hours', 'Status'];
+
     if (employeeId) {
+      const userQuery = [{ employeeId: new RegExp(employeeId, 'i') }];
+      if (mongoose.Types.ObjectId.isValid(employeeId)) {
+        userQuery.push({ _id: employeeId });
+      }
+
       const user = await User.findOne({
-        $or: [{ employeeId }, { _id: employeeId }],
+        $or: userQuery,
       });
+
       if (user) {
         filter.userId = user._id;
+      } else {
+        // User not found, return empty CSV with headers
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename=attendance-export-${Date.now()}.csv`
+        );
+        return res.status(200).send(headers.map(escapeCSVField).join(',') + '\n');
       }
     }
 
@@ -434,19 +450,17 @@ export const exportAttendance = async (req, res, next) => {
       .sort({ date: -1 })
       .populate('userId', 'name email employeeId department');
 
-    const headers = ['Date', 'Employee ID', 'Name', 'Email', 'Department', 'Check In', 'Check Out', 'Total Hours', 'Status'];
-
     let csvContent = headers.map(escapeCSVField).join(',') + '\n';
 
     attendance.forEach((record) => {
       const row = [
-        record.date,
+        record.date ? ' ' + dayjs(record.date).format('MM/DD/YYYY') : 'N/A',
         record.userId?.employeeId || 'N/A',
         record.userId?.name || 'N/A',
         record.userId?.email || 'N/A',
         record.userId?.department || 'N/A',
-        record.checkInTime ? new Date(record.checkInTime).toLocaleString() : 'N/A',
-        record.checkOutTime ? new Date(record.checkOutTime).toLocaleString() : 'N/A',
+        record.checkInTime ? ' ' + dayjs(record.checkInTime).format('MM/DD/YYYY h:mm A') : 'N/A',
+        record.checkOutTime ? ' ' + dayjs(record.checkOutTime).format('MM/DD/YYYY h:mm A') : 'N/A',
         record.totalHours || 0,
         record.status || 'N/A',
       ];
