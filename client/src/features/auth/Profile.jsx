@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useGetMeQuery, useUpdateProfileMutation, useGetDepartmentsQuery } from './authApi.js'
 import { setCredentials, logout } from './authSlice.js'
-import { RefreshCw } from 'lucide-react'
+import {
+    RefreshCw,
+    Mail,
+    Briefcase,
+    BadgeCheck,
+    Calendar,
+    Camera,
+    Pencil,
+    Save,
+    X
+} from 'lucide-react'
 
 const Profile = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
+    const { isSidebarOpen } = useOutletContext()
     const { user: userFromStore, accessToken } = useSelector((state) => state.auth)
 
     // Fetch user data with refetch on mount to ensure freshness
@@ -155,342 +166,279 @@ const Profile = () => {
 
     if (isLoading) {
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-2xl mx-auto">
-                    <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading profile...</p>
-                    </div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                    <p className="text-gray-600 font-medium">Loading profile...</p>
                 </div>
             </div>
         )
     }
 
     if (error) {
-        // Handle 401 Unauthorized - redirect to login
         if (error.status === 401 || error.status === 'FETCH_ERROR') {
             return (
-                <div className="container mx-auto px-4 py-8">
-                    <div className="max-w-2xl mx-auto">
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                            <p className="text-red-800 font-semibold mb-2">Authentication Error</p>
-                            <p className="text-red-600 text-sm mb-4">
-                                Your session has expired. Please log in again.
-                            </p>
-                            <button
-                                onClick={() => {
-                                    dispatch(logout())
-                                    navigate('/')
-                                }}
-                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                            >
-                                Go to Login
-                            </button>
-                        </div>
+                <div className="p-8 flex justify-center">
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center max-w-md">
+                        <p className="text-red-800 font-bold text-lg mb-2">Authentication Error</p>
+                        <p className="text-red-600 mb-6">Your session has expired. Please log in again.</p>
+                        <button
+                            onClick={() => {
+                                dispatch(logout())
+                                navigate('/')
+                            }}
+                            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                        >
+                            Go to Login
+                        </button>
                     </div>
                 </div>
             )
         }
-
         return (
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-2xl mx-auto">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                        <p className="text-red-800 font-semibold mb-2">Error Loading Profile</p>
-                        <p className="text-red-600 text-sm">{error.data?.message || 'Failed to load profile'}</p>
-                        <button
-                            onClick={() => refetch()}
-                            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                            Retry
-                        </button>
-                    </div>
+            <div className="p-8 flex justify-center">
+                <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center max-w-md">
+                    <p className="text-red-800 font-bold text-lg mb-2">Error Loading Profile</p>
+                    <p className="text-red-600 mb-6">{error.data?.message || 'Failed to load profile'}</p>
+                    <button
+                        onClick={() => refetch()}
+                        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                    >
+                        Retry
+                    </button>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-2xl mx-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-                    <button
-                        onClick={() => refetch()}
-                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
-                        title="Refresh Data"
-                    >
-                        <RefreshCw size={20} />
-                    </button>
+        <div className="p-8">
+            {/* Header with Title and Refresh */}
+            <div className="flex justify-between items-center mb-8">
+                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-12' : ''}`}>
+                    <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
+                </div>
+                <button
+                    onClick={() => refetch()}
+                    className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+                    title="Refresh Data"
+                >
+                    <RefreshCw size={20} />
+                </button>
+            </div>
+
+            {/* Main Profile Card */}
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+                {/* Banner */}
+                <div className="h-48 bg-[#0f172a] relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-900/20 to-indigo-900/20"></div>
+                    {/* Decorative patterns */}
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
                 </div>
 
-                {/* ... (success/error messages) */}
-                {successMessage && (
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-green-800 font-medium flex items-center">
-                            <span className="mr-2">✓</span>
-                            {successMessage}
-                        </p>
-                    </div>
-                )}
-
-                {errors.submit && (
-                    <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-800 font-medium">{errors.submit}</p>
-                    </div>
-                )}
-
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
-                        {!isEditing && (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                            >
-                                Edit Profile
-                            </button>
-                        )}
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Profile Image */}
-                        <div className="flex flex-col items-center mb-6">
-                            <div className="relative h-32 w-32 mb-4">
-                                {imagePreview ? (
-                                    <img
-                                        src={imagePreview}
-                                        alt="Profile"
-                                        className="h-32 w-32 rounded-full object-cover border-4 border-white shadow-lg"
-                                    />
-                                ) : (
-                                    <div className="h-32 w-32 rounded-full bg-indigo-100 flex items-center justify-center border-4 border-white shadow-lg">
-                                        <span className="text-4xl text-indigo-500 font-bold">
-                                            {user?.name ? user.name.charAt(0).toUpperCase() : '?'}
-                                        </span>
+                <div className="px-8 pb-8">
+                    <form onSubmit={handleSubmit}>
+                        {/* Profile Header Row */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end -mt-16 mb-12 gap-6">
+                            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+                                {/* Profile Image */}
+                                <div className="relative group">
+                                    <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100">
+                                        {imagePreview ? (
+                                            <img
+                                                src={imagePreview}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-500 text-4xl font-bold">
+                                                {user?.name ? user.name.charAt(0).toUpperCase() : '?'}
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                {isEditing && (
-                                    <label
-                                        htmlFor="image-upload"
-                                        className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 shadow-md transition-colors"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                        </svg>
-                                        <input
-                                            id="image-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageChange}
-                                            className="hidden"
-                                        />
-                                    </label>
-                                )}
-                            </div>
-                            {isEditing && <p className="text-sm text-gray-500">Click the pencil icon to upload a new photo</p>}
-                        </div>
-
-                        {/* Name Field */}
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Full Name <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                value={formData.name}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
-                                    ? 'border-gray-300'
-                                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                                    } ${errors.name ? 'border-red-500' : ''}`}
-                                placeholder="Enter your full name"
-                            />
-                            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                        </div>
-
-                        {/* Email Field - Read Only */}
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                Email Address
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={user?.email || ''}
-                                disabled
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-                        </div>
-
-                        {/* Employee ID - Read Only */}
-                        <div>
-                            <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 mb-1">
-                                Employee ID
-                            </label>
-                            <input
-                                id="employeeId"
-                                name="employeeId"
-                                type="text"
-                                value={user?.employeeId || ''}
-                                disabled
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Employee ID cannot be changed</p>
-                        </div>
-
-                        {/* Department Field */}
-                        <div>
-                            <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-                                Department <span className="text-red-500">*</span>
-                            </label>
-                            {isEditing && departments.length > 0 ? (
-                                <select
-                                    id="department"
-                                    name="department"
-                                    value={formData.department}
-                                    onChange={handleChange}
-                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${errors.department ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                >
-                                    <option value="">Select Department</option>
-                                    {departments.map((dept) => (
-                                        <option key={dept._id} value={dept.name}>
-                                            {dept.name}
-                                        </option>
-                                    ))}
-                                    {/* Fallback if current department is not in list */}
-                                    {formData.department && !departments.some(d => d.name === formData.department) && (
-                                        <option value={formData.department}>{formData.department}</option>
+                                    {isEditing && (
+                                        <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 shadow-md transition-colors border-4 border-white">
+                                            <Pencil size={16} />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageChange}
+                                                className="hidden"
+                                            />
+                                        </label>
                                     )}
-                                </select>
-                            ) : (
-                                <input
-                                    id="department"
-                                    name="department"
-                                    type="text"
-                                    value={formData.department}
-                                    onChange={handleChange}
-                                    disabled={!isEditing}
-                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
-                                        ? 'border-gray-300'
-                                        : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                                        } ${errors.department ? 'border-red-500' : ''}`}
-                                    placeholder="Enter your department"
-                                />
-                            )}
-                            {errors.department && <p className="text-red-500 text-sm mt-1">{errors.department}</p>}
-                        </div>
+                                </div>
 
-                        {/* Role - Read Only */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                            <input
-                                type="text"
-                                value={user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''}
-                                disabled
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 cursor-not-allowed"
-                            />
-                        </div>
-
-                        {/* Action Buttons */}
-                        {isEditing && (
-                            <div className="flex gap-4 pt-4 border-t border-gray-200">
-                                <button
-                                    type="submit"
-                                    disabled={isUpdating || !hasChanges()}
-                                    className={`px-6 py-2 rounded-md font-medium transition-colors ${isUpdating || !hasChanges()
-                                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                        }`}
-                                >
-                                    {isUpdating ? (
-                                        <span className="inline-flex items-center">
-                                            <svg
-                                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <circle
-                                                    className="opacity-25"
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                    stroke="currentColor"
-                                                    strokeWidth="4"
-                                                ></circle>
-                                                <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                ></path>
-                                            </svg>
-                                            Saving...
-                                        </span>
+                                {/* Name & Role */}
+                                <div className="text-center md:text-left mb-2">
+                                    {isEditing ? (
+                                        <div className="mb-2">
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                className="text-3xl font-bold text-gray-900 border-b-2 border-indigo-200 focus:border-indigo-600 focus:outline-none bg-transparent w-full md:w-auto"
+                                                placeholder="Enter your name"
+                                            />
+                                            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                        </div>
                                     ) : (
-                                        'Save Changes'
+                                        <h2 className="text-3xl font-bold text-gray-900">{user?.name}</h2>
                                     )}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCancel}
-                                    disabled={isUpdating}
-                                    className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
-                                >
-                                    Cancel
-                                </button>
+                                    <p className="text-gray-500 font-medium">Employee</p>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-3">
+                                {isEditing ? (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={handleCancel}
+                                            className="px-6 py-2.5 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                        >
+                                            <X size={18} />
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={isUpdating || !hasChanges()}
+                                            className="px-6 py-2.5 rounded-xl font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isUpdating ? (
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            ) : (
+                                                <Save size={18} />
+                                            )}
+                                            Save Changes
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-6 py-2.5 rounded-xl font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                                    >
+                                        Edit Profile
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Messages */}
+                        {successMessage && (
+                            <div className="mb-8 p-4 bg-green-50 text-green-700 rounded-xl flex items-center gap-3 border border-green-100">
+                                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span className="font-medium">{successMessage}</span>
                             </div>
                         )}
 
-                        {!isEditing && !hasChanges() && (
-                            <div className="pt-4 border-t border-gray-200">
-                                <p className="text-sm text-gray-500 italic">
-                                    Click "Edit Profile" to update your information
-                                </p>
+                        {errors.submit && (
+                            <div className="mb-8 p-4 bg-red-50 text-red-700 rounded-xl flex items-center gap-3 border border-red-100">
+                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </div>
+                                <span className="font-medium">{errors.submit}</span>
                             </div>
                         )}
+
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Email Card */}
+                            <div className="p-6 bg-gray-50 rounded-2xl flex items-center gap-5 border border-gray-100 hover:border-gray-200 transition-colors group">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <Mail size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Email Address</p>
+                                    <p className="text-gray-900 font-semibold text-lg">{user?.email}</p>
+                                </div>
+                            </div>
+
+                            {/* Department Card */}
+                            <div className="p-6 bg-gray-50 rounded-2xl flex items-center gap-5 border border-gray-100 hover:border-gray-200 transition-colors group">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-orange-500 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <Briefcase size={24} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Department</p>
+                                    {isEditing ? (
+                                        <div>
+                                            {departments.length > 0 ? (
+                                                <select
+                                                    name="department"
+                                                    value={formData.department}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                                >
+                                                    <option value="">Select Department</option>
+                                                    {departments.map((dept) => (
+                                                        <option key={dept._id} value={dept.name}>
+                                                            {dept.name}
+                                                        </option>
+                                                    ))}
+                                                    {formData.department && !departments.some(d => d.name === formData.department) && (
+                                                        <option value={formData.department}>{formData.department}</option>
+                                                    )}
+                                                </select>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    name="department"
+                                                    value={formData.department}
+                                                    onChange={handleChange}
+                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    placeholder="Enter department"
+                                                />
+                                            )}
+                                            {errors.department && <p className="text-red-500 text-xs mt-1">{errors.department}</p>}
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-900 font-semibold text-lg">{user?.department || 'Not Assigned'}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Employee ID Card */}
+                            <div className="p-6 bg-gray-50 rounded-2xl flex items-center gap-5 border border-gray-100 hover:border-gray-200 transition-colors group">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-500 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <BadgeCheck size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Employee ID</p>
+                                    <p className="text-gray-900 font-semibold text-lg font-mono">{user?.employeeId || 'N/A'}</p>
+                                </div>
+                            </div>
+
+                            {/* Join Date Card */}
+                            <div className="p-6 bg-gray-50 rounded-2xl flex items-center gap-5 border border-gray-100 hover:border-gray-200 transition-colors group">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-rose-500 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <Calendar size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Join Date</p>
+                                    <p className="text-gray-900 font-semibold text-lg">
+                                        {user?.createdAt
+                                            ? new Date(user.createdAt).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                            })
+                                            : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </form>
-                </div>
-
-                {/* Account Information Card */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900">Account Information</h2>
-                    <div className="space-y-3 text-sm">
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-gray-600 font-medium">User ID:</span>
-                            <span className="text-gray-900 font-mono text-xs">{user?._id || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                            <span className="text-gray-600 font-medium">Account Created:</span>
-                            <span className="text-gray-900">
-                                {user?.createdAt
-                                    ? new Date(user.createdAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })
-                                    : 'N/A'}
-                            </span>
-                        </div>
-                        {user?.updatedAt && (
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-gray-600 font-medium">Last Updated:</span>
-                                <span className="text-gray-900">
-                                    {new Date(user.updatedAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                    })}
-                                </span>
-                            </div>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>

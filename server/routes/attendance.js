@@ -15,11 +15,11 @@ import { protect, employeeOnly, managerOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/checkin', protect, employeeOnly, checkin);
-router.post('/checkout', protect, employeeOnly, checkout);
-router.get('/my-history', protect, employeeOnly, myHistory);
-router.get('/my-summary', protect, employeeOnly, mySummary);
-router.get('/today', protect, employeeOnly, today);
+router.post('/checkin', protect, checkin);
+router.post('/checkout', protect, checkout);
+router.get('/my-history', protect, myHistory);
+router.get('/my-summary', protect, mySummary);
+router.get('/today', protect, today);
 
 router.get('/all', protect, managerOnly, all);
 router.get('/employee/:id', protect, managerOnly, getEmployeeAttendance);
