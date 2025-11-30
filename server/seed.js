@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import User from './models/User.js';
 import Attendance from './models/Attendance.js';
+import Department from './models/Department.js';
 import dayjs from 'dayjs';
 
 dotenv.config();
@@ -12,8 +13,19 @@ const seedData = async () => {
 
     await User.deleteMany({});
     await Attendance.deleteMany({});
+    await Department.deleteMany({});
 
     console.log('Cleared existing data...');
+
+    const departments = [
+      { name: 'Development', description: 'Software Development Team' },
+      { name: 'Design', description: 'UI/UX Design Team' },
+      { name: 'Testing', description: 'QA and Testing Team' },
+      { name: 'Marketing', description: 'Marketing and Sales Team' }
+    ];
+
+    await Department.insertMany(departments);
+    console.log('✓ Created Departments');
 
     const manager = await User.create({
       name: 'Arjun Reddy',

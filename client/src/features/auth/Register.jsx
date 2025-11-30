@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
-import { useRegisterMutation } from './authApi.js'
+import { useRegisterMutation, useGetDepartmentsQuery } from './authApi.js'
 import { setCredentials } from './authSlice.js'
 
 const Register = () => {
@@ -19,6 +19,7 @@ const Register = () => {
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
   const [register, { isLoading }] = useRegisterMutation()
+  const { data: departmentsData, isLoading: departmentsLoading } = useGetDepartmentsQuery()
 
   // Generate preview employee ID based on role
   useEffect(() => {
@@ -242,16 +243,25 @@ const Register = () => {
                   <label htmlFor="department" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Department
                   </label>
-                  <input
+                  <select
                     id="department"
                     name="department"
-                    type="text"
                     required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-200 rounded-lg placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 sm:text-sm bg-gray-50 focus:bg-white"
-                    placeholder="Engineering"
+                    className="block w-full px-3 py-3 border border-gray-200 bg-gray-50 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent sm:text-sm"
                     value={formData.department}
                     onChange={handleChange}
-                  />
+                  >
+                    <option value="">Select Department</option>
+                    {departmentsLoading ? (
+                      <option disabled>Loading departments...</option>
+                    ) : (
+                      departmentsData?.data?.map((dept) => (
+                        <option key={dept._id} value={dept.name}>
+                          {dept.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
                   {errors.department && <p className="text-red-500 text-xs mt-1 ml-1">{errors.department}</p>}
                 </div>
               </div>

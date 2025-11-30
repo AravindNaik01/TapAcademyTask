@@ -23,9 +23,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/uploads', express.static('uploads'));
 
+import departmentRoutes from './routes/departmentRoutes.js';
+
 app.use('/api/auth', authRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/departments', departmentRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

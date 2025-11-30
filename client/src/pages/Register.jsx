@@ -107,16 +107,20 @@ const Register = () => {
               <label htmlFor="department" className="block text-sm font-medium text-gray-700">
                 Department
               </label>
-              <input
+              <select
                 id="department"
                 name="department"
-                type="text"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Department"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 value={formData.department}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Select Department</option>
+                <option value="Development">Development</option>
+                <option value="Design">Design</option>
+                <option value="Testing">Testing</option>
+                <option value="Marketing">Marketing</option>
+              </select>
             </div>
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">

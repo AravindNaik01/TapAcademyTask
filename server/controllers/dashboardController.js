@@ -155,20 +155,45 @@ export const managerDashboard = async (req, res, next) => {
     }
 
     // 4. Department-wise Attendance (Today)
-    // We need to group the present employees by department
-    const departmentStats = {};
+    // 4. Department-wise Attendance (Today)
+    // Get total employees per department
+    const employeesByDept = await User.aggregate([
+      { $match: { role: 'employee' } },
+      { $group: { _id: '$department', count: { $sum: 1 } } }
+    ]);
+
+    // Group present employees by department
+    const presentByDept = {};
     todayAttendance.forEach(record => {
       const dept = record.userId.department || 'Unknown';
-      if (!departmentStats[dept]) {
-        departmentStats[dept] = 0;
+      if (!presentByDept[dept]) {
+        presentByDept[dept] = 0;
       }
-      departmentStats[dept]++;
+      presentByDept[dept]++;
     });
 
-    const departmentChartData = Object.keys(departmentStats).map(dept => ({
-      name: dept,
-      value: departmentStats[dept]
-    }));
+    const departmentChartData = employeesByDept.map(deptData => {
+      const deptName = deptData._id || 'Unknown';
+      const total = deptData.count;
+      const present = presentByDept[deptName] || 0;
+      const absent = total - present;
+
+      return {
+        name: deptName,
+        value: present, // Value for the pie chart slice size (based on present count)
+        total: total,
+        present: present,
+        absent: absent
+      };
+    }).filter(d => d.value > 0); // Optional: Only show departments with present employees in the pie chart? 
+    // Actually, usually pie charts show distribution of *something*. 
+    // If the chart is "Department-wise Attendance", it usually means "Share of Present Employees by Department".
+    // So filtering by value > 0 is correct for the slices, but maybe we want to show all departments?
+    // If value is 0, it won't show in PieChart anyway. Let's keep all and let Recharts handle 0s.
+    // Wait, if I filter, I might lose departments with 0 present but some absent.
+    // But a PieChart of "Attendance" usually implies "Who is here".
+    // Let's remove the filter to be safe, but Recharts might hide 0 value slices.
+
 
     // 5. Month Stats (Existing)
     const monthAttendance = await Attendance.find({

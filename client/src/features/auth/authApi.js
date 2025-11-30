@@ -28,8 +28,11 @@ export const authApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['User'],
     }),
+    getDepartments: builder.query({
+      query: () => '/departments',
+    }),
   }),
 })
 
-export const { useRegisterMutation, useLoginMutation, useGetMeQuery, useUpdateProfileMutation } = authApi
+export const { useRegisterMutation, useLoginMutation, useGetMeQuery, useUpdateProfileMutation, useGetDepartmentsQuery } = authApi
 

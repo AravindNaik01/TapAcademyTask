@@ -43,6 +43,32 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null
 }
 
+const CustomPieTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg">
+        <p className="font-semibold text-gray-900 mb-2">{data.name}</p>
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-gray-600">Total:</span>
+            <span className="font-medium text-gray-900">{data.total}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-green-600">Present:</span>
+            <span className="font-medium text-gray-900">{data.present}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-red-600">Absent:</span>
+            <span className="font-medium text-gray-900">{data.absent}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
 const ManagerDashboard = () => {
   const { data, isLoading, error } = useGetManagerDashboardQuery()
 
@@ -221,7 +247,7 @@ const ManagerDashboard = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<CustomPieTooltip />} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
