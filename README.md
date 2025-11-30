@@ -1,8 +1,27 @@
+**Name:** Aravind J Naik
+**College:** Shree Devi Institute of Technology Mangalore
+**Contact No:** 6363986735
+**Email:** naikaravind044@gmail.com
+
 # Employee Attendance Management System
 
 A full-stack MERN (MongoDB, Express, React, Node.js) application for managing employee attendance with role-based access control (Employee & Manager).
 
-## Features
+## 📸 Screenshots
+
+| Manager Dashboard | Attendance List |
+|-------------------|-----------------|
+| ![Manager Dashboard](docs/screenshots/manager_dashboard.png) | ![Attendance List](docs/screenshots/attendance_list.png) |
+
+| Calendar View | Reports |
+|---------------|---------|
+| ![Calendar View](docs/screenshots/calendar_view.png) | ![Reports](docs/screenshots/reports_view.png) |
+
+| Login Page |
+|------------|
+| ![Login Page](docs/screenshots/login_page.png) |
+
+## 🚀 Features
 
 ### Authentication
 - User registration and login
@@ -24,8 +43,9 @@ A full-stack MERN (MongoDB, Express, React, Node.js) application for managing em
   - Status (Present, Half Day, Absent)
 - Export attendance data to CSV
 - Paginated attendance list
+- Visual reports and charts
 
-## Tech Stack
+## 🛠 Tech Stack
 
 ### Backend
 - **Node.js** with Express.js
@@ -39,57 +59,26 @@ A full-stack MERN (MongoDB, Express, React, Node.js) application for managing em
 - **React Router** for navigation
 - **Axios** for API calls
 - **Tailwind CSS** for styling
+- **Recharts** for data visualization
 
-## Project Structure
-
-```
-TapAcademyTask/
-├── server/                 # Backend application
-│   ├── config/
-│   │   └── db.js          # MongoDB connection
-│   ├── middleware/
-│   │   └── auth.js        # JWT authentication middleware
-│   ├── models/
-│   │   ├── User.js        # User model
-│   │   └── Attendance.js  # Attendance model
-│   ├── routes/
-│   │   ├── auth.js        # Authentication routes
-│   │   └── attendance.js  # Attendance routes
-│   ├── seed.js            # Database seeder
-│   ├── server.js          # Express server
-│   └── package.json
-│
-└── client/                 # Frontend application
-    ├── src/
-    │   ├── components/    # Reusable components
-    │   ├── pages/         # Page components
-    │   ├── services/      # API service functions
-    │   ├── store/         # Redux store & slices
-    │   ├── App.jsx        # Main app component
-    │   └── main.jsx       # Entry point
-    └── package.json
-```
-
-## Setup Instructions
+## ⚙️ Setup Instructions
 
 ### Prerequisites
 - Node.js (v16 or higher)
 - MongoDB (local installation or MongoDB Atlas)
 - npm or yarn
 
-### Backend Setup
+### 1. Backend Setup
 
-1. Navigate to the server directory:
+Navigate to the server directory and install dependencies:
+
 ```bash
 cd server
-```
-
-2. Install dependencies:
-```bash
 npm install
 ```
 
-3. Create a `.env` file in the `server` directory:
+Create a `.env` file in the `server` directory with the following variables:
+
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/employee-attendance
@@ -97,153 +86,104 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 NODE_ENV=development
 ```
 
-4. Make sure MongoDB is running on your system.
+Seed the database with test data (creates Manager and Employee accounts):
 
-5. Seed the database (optional - creates test users):
 ```bash
 npm run seed
 ```
 
-6. Start the development server:
+Start the backend server:
+
 ```bash
 npm run dev
 ```
+*Server runs on http://localhost:5000*
 
-The backend server will run on `http://localhost:5000`
+### 2. Frontend Setup
 
-### Frontend Setup
+Open a new terminal, navigate to the client directory and install dependencies:
 
-1. Navigate to the client directory:
 ```bash
 cd client
-```
-
-2. Install dependencies:
-```bash
 npm install
 ```
 
-3. Create a `.env` file in the `client` directory:
+Create a `.env` file in the `client` directory:
+
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-4. Start the development server:
+Start the frontend development server:
+
 ```bash
 npm run dev
 ```
+*Application runs on http://localhost:5173*
 
-The frontend application will run on `http://localhost:5173`
+## 🔑 Test Credentials
 
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user (Protected)
-
-### Employee Attendance
-- `POST /api/attendance/checkin` - Employee check-in (Protected, Employee only)
-- `POST /api/attendance/checkout` - Employee check-out (Protected, Employee only)
-- `GET /api/attendance/my-history` - Get employee's attendance history (Protected, Employee only)
-- `GET /api/attendance/my-summary` - Get employee's attendance summary (Protected, Employee only)
-
-### Manager Attendance
-- `GET /api/attendance/all` - Get all attendance records (Protected, Manager only)
-- `GET /api/attendance/employee/:id` - Get specific employee's attendance (Protected, Manager only)
-- `GET /api/attendance/export` - Export attendance as CSV (Protected, Manager only)
-
-## Seed Data
-
-After running `npm run seed` in the server directory, the following test accounts will be created:
+After running `npm run seed`, use these credentials to log in:
 
 ### Manager Account
-- **Email:** manager@company.com
-- **Password:** manager123
+- **Email:** `manager@company.com`
+- **Password:** `manager123`
 - **Employee ID:** MGR001
 
 ### Employee Accounts
-- **Email:** alice@company.com
-- **Password:** employee123
+- **Email:** `sneha@company.com`
+- **Password:** `employee123`
 - **Employee ID:** EMP001
 
-- **Email:** bob@company.com
-- **Password:** employee123
+- **Email:** `vikram@company.com`
+- **Password:** `employee123`
 - **Employee ID:** EMP002
 
-## Usage
+*(All 10 seeded employees use the password `employee123`)*
 
-1. **Register/Login**: Create a new account or login with existing credentials
-2. **Employee Dashboard**: 
-   - View today's attendance status
-   - Check in/Check out
-   - View last 7 days summary
-   - Access full attendance history
-3. **Manager Dashboard**:
-   - View all employees' attendance
-   - Apply filters (date range, employee ID, status)
-   - Export data to CSV
+## 📂 Project Structure
 
-## Database Schema
-
-### User Model
-- `name` (String, required)
-- `email` (String, required, unique)
-- `password` (String, required, hashed)
-- `role` (String, enum: ['employee', 'manager'])
-- `employeeId` (String, required, unique)
-- `department` (String, required)
-- `createdAt`, `updatedAt` (timestamps)
-
-### Attendance Model
-- `userId` (ObjectId, reference to User)
-- `date` (String, format: YYYY-MM-DD)
-- `checkInTime` (Date)
-- `checkOutTime` (Date, optional)
-- `status` (String, enum: ['present', 'absent', 'half-day'])
-- `totalHours` (Number, calculated on checkout)
-- `createdAt`, `updatedAt` (timestamps)
-
-## Features Implementation
-
-- ✅ JWT Authentication with secure token storage
-- ✅ Role-based route protection (Employee & Manager)
-- ✅ Automatic total hours calculation on checkout
-- ✅ Prevent multiple check-ins/outs on the same day
-- ✅ Pagination for attendance lists
-- ✅ CSV export functionality
-- ✅ Responsive UI with Tailwind CSS
-- ✅ Error handling and validation
-
-## Development
-
-### Backend Development
-```bash
-cd server
-npm run dev  # Uses nodemon for auto-restart
+```
+TapAcademyTask/
+├── server/                 # Backend application
+│   ├── config/            # Database configuration
+│   ├── controllers/       # Route controllers
+│   ├── middleware/        # Auth middleware
+│   ├── models/            # Mongoose models
+│   ├── routes/            # API routes
+│   ├── seed.js            # Database seeder script
+│   └── server.js          # Entry point
+│
+└── client/                 # Frontend application
+    ├── src/
+    │   ├── components/    # Reusable UI components
+    │   ├── features/      # Feature-based modules (Auth, Attendance)
+    │   ├── pages/         # Main pages
+    │   ├── store/         # Redux store configuration
+    │   └── utils/         # Helper functions
+    └── public/            # Static assets
 ```
 
-### Frontend Development
-```bash
-cd client
-npm run dev  # Vite dev server with hot reload
-```
+## 📝 API Endpoints
 
-## Production Build
+### Authentication
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user profile
 
-### Frontend Build
-```bash
-cd client
-npm run build
-```
+### Employee
+- `POST /api/attendance/checkin` - Check-in
+- `POST /api/attendance/checkout` - Check-out
+- `GET /api/attendance/my-history` - View personal history
+- `GET /api/attendance/my-summary` - View personal stats
 
-The production build will be in the `client/dist` directory.
+### Manager
+- `GET /api/attendance/all` - View all attendance
+- `GET /api/attendance/export` - Export CSV
+- `GET /api/attendance/summary` - View overall stats
+- `GET /api/attendance/today-status` - View today's status
 
-## License
+## 📄 License
 
 This project is open source and available for educational purposes.
 
-## Author
-
-Built as a complete MERN stack project for employee attendance management.
 

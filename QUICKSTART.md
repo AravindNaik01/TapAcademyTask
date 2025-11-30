@@ -49,9 +49,13 @@ After running the seed script, you can login with:
 - Email: `manager@company.com`
 - Password: `manager123`
 
-### Employee:
-- Email: `alice@company.com`
+### Employees (Sample):
+- Email: `sneha@company.com`
 - Password: `employee123`
+- Email: `vikram@company.com`
+- Password: `employee123`
+
+*(All employees use the password `employee123`)*
 
 ## Common Issues
 
