@@ -75,7 +75,7 @@ const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmploy
                 <tr
                   key={record._id}
                   className={onEmployeeClick && record.userId ? 'cursor-pointer hover:bg-gray-50' : ''}
-                  onClick={() => onEmployeeClick && record.userId && onEmployeeClick(record.userId._id || record.userId)}
+                  onClick={() => onEmployeeClick && record.userId && onEmployeeClick(record.userId.employeeId || record.userId._id)}
                 >
                   {showEmployeeColumn && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -96,13 +96,12 @@ const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmploy
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        record.status === 'present'
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === 'present'
                           ? 'bg-green-100 text-green-800'
                           : record.status === 'half-day'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
                     >
                       {record.status}
                     </span>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useGetManagerDashboardQuery, useGetDepartmentStatsQuery } from './attendanceApi.js'
 import {
   BarChart,
@@ -71,6 +71,7 @@ const CustomPieTooltip = ({ active, payload }) => {
 }
 
 const ManagerDashboard = () => {
+  const navigate = useNavigate()
   const [filterType, setFilterType] = useState('daily')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
@@ -313,13 +314,25 @@ const ManagerDashboard = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {absentEmployees?.length > 0 ? (
                   absentEmployees.map((employee) => (
-                    <tr key={employee._id} className="hover:bg-gray-50">
+                    <tr
+                      key={employee._id}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/manager/attendance/${employee.employeeId || employee._id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
-                              {employee.name.charAt(0)}
-                            </div>
+                            {employee.profileImage ? (
+                              <img
+                                className="h-8 w-8 rounded-full object-cover"
+                                src={`http://localhost:5000${employee.profileImage}`}
+                                alt={employee.name}
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
+                                {employee.name.charAt(0)}
+                              </div>
+                            )}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{employee.name}</div>
@@ -360,7 +373,7 @@ const ManagerDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
           <div className="space-y-4">
             <Link
-              to="/manager/attendance"
+              to="/manager/attendance/all"
               className="block p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
             >
               <div className="flex items-center justify-between">

@@ -294,7 +294,7 @@ const TeamCalendar = () => {
                         <tr
                           key={record._id}
                           className="hover:bg-gray-50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/manager/attendance/${record.userId._id}`)}
+                          onClick={() => navigate(`/manager/attendance/${record.userId.employeeId || record.userId._id}`)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">

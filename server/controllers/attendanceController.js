@@ -307,9 +307,12 @@ export const getEmployeeAttendance = async (req, res, next) => {
     const { id } = req.params;
     const { startDate, endDate } = req.query;
 
-    let user = await User.findOne({
-      $or: [{ employeeId: id }, { _id: id }],
-    });
+    const query = { $or: [{ employeeId: id }] };
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query.$or.push({ _id: id });
+    }
+
+    let user = await User.findOne(query);
 
     if (!user) {
       return res.status(404).json({

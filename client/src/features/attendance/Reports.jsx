@@ -108,7 +108,7 @@ const Reports = () => {
                 dashboard.performers.top.map((performer, index) => (
                   <tr
                     key={index}
-                    onClick={() => navigate(`/manager/attendance/${performer.userId}`)}
+                    onClick={() => navigate(`/manager/attendance/${performer.employeeId || performer.userId}`)}
                     className="cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
