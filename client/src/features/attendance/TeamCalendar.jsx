@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useGetAllAttendanceQuery } from './attendanceApi.js'
 import { formatDate, getMonthStartEnd } from '../../utils/date.js'
 import { ChevronLeft, ChevronRight, Users, CheckCircle, XCircle, Calendar as CalendarIcon, Star, Info } from 'lucide-react'
 
 const TeamCalendar = () => {
+  const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(null)
   const [showModal, setShowModal] = useState(false)
@@ -289,11 +291,23 @@ const TeamCalendar = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {getSelectedDateAttendance().length > 0 ? (
                       getSelectedDateAttendance().map((record) => (
-                        <tr key={record._id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={record._id}
+                          className="hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/manager/attendance/${record.userId._id}`)}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs mr-3">
-                                {record.userId?.name?.charAt(0) || 'U'}
+                              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs mr-3 overflow-hidden">
+                                {record.userId?.profileImage ? (
+                                  <img
+                                    src={`http://localhost:5000${record.userId.profileImage}`}
+                                    alt={record.userId.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  record.userId?.name?.charAt(0) || 'U'
+                                )}
                               </div>
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{record.userId?.name || 'N/A'}</div>

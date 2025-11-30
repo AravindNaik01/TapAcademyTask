@@ -48,9 +48,17 @@ const EmployeeAttendanceDetails = () => {
                 <h1 className="text-2xl font-bold text-gray-900 mb-4">Employee Details</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold">
-                            {employee?.name?.charAt(0)}
-                        </div>
+                        {employee?.profileImage ? (
+                            <img
+                                src={`http://localhost:5000${employee.profileImage}`}
+                                alt={employee.name}
+                                className="w-16 h-16 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold">
+                                {employee?.name?.charAt(0)}
+                            </div>
+                        )}
                         <div>
                             <h2 className="text-xl font-semibold text-gray-900">{employee?.name}</h2>
                             <p className="text-gray-500">{employee?.department}</p>

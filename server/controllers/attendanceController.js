@@ -338,6 +338,7 @@ export const getEmployeeAttendance = async (req, res, next) => {
         email: user.email,
         employeeId: user.employeeId,
         department: user.department,
+        profileImage: user.profileImage,
       },
       data: attendance,
     });

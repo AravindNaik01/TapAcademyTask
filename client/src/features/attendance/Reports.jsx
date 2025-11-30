@@ -1,9 +1,11 @@
 import { useGetAttendanceSummaryQuery, useGetManagerDashboardQuery, useLazyExportCsvQuery } from './attendanceApi.js'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { downloadCsv } from '../../utils/download.js'
 
 const Reports = () => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { data: summaryData, isLoading: isLoadingSummary } = useGetAttendanceSummaryQuery()
   const { data: dashboardData, isLoading: isLoadingDashboard } = useGetManagerDashboardQuery()
   const [exportCsv, { isLoading: isExporting }] = useLazyExportCsvQuery()
@@ -104,7 +106,11 @@ const Reports = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {dashboard.performers?.top?.length > 0 ? (
                 dashboard.performers.top.map((performer, index) => (
-                  <tr key={index}>
+                  <tr
+                    key={index}
+                    onClick={() => navigate(`/manager/attendance/${performer.userId}`)}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {performer.name}
                     </td>
