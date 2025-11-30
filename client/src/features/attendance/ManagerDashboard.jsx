@@ -12,10 +12,36 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from 'recharts'
 import { Users, UserCheck, UserX, Clock, AlertCircle } from 'lucide-react'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    const dateObj = new Date(data.fullDate)
+    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+    return (
+      <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg">
+        <p className="font-semibold text-gray-900 mb-2">{`${label}, ${formattedDate}`}</p>
+        {payload.map((entry, index) => {
+          if (['Holiday', 'No Data', 'holidayLabel'].includes(entry.name)) return null
+          return (
+            <div key={index} className="flex items-center gap-2 text-sm mb-1">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-gray-600 capitalize">{entry.name}:</span>
+              <span className="font-medium text-gray-900">{entry.value}</span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  return null
+}
 
 const ManagerDashboard = () => {
   const { data, isLoading, error } = useGetManagerDashboardQuery()
@@ -114,17 +140,61 @@ const ManagerDashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Weekly Attendance Trend</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts?.weeklyTrend || []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  cursor={{ fill: '#f3f4f6' }}
+              <BarChart
+                data={(charts?.weeklyTrend || []).map(d => {
+                  const isHoliday = d.status === 'Holiday';
+                  const isNoData = d.status === 'No Data';
+                  const hasData = (d.present || 0) > 0;
+                  const maxVal = 6;
+                  return {
+                    ...d,
+                    onTime: (d.present || 0) - (d.late || 0),
+                    holiday: (isHoliday && !hasData) ? maxVal : 0,
+                    noData: isNoData ? maxVal : 0,
+                    // Helper bar for holiday label when data exists
+                    holidayLabel: (isHoliday && hasData) ? 0.1 : 0
+                  };
+                })}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  dy={10}
                 />
-                <Legend />
-                <Bar dataKey="present" name="Present" fill="#4F46E5" radius={[4, 4, 0, 0]} barSize={20} />
-                <Bar dataKey="late" name="Late" fill="#F59E0B" radius={[4, 4, 0, 0]} barSize={20} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F9FAFB' }} />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar dataKey="onTime" name="On Time" stackId="a" fill="#10B981" barSize={32} />
+                <Bar dataKey="late" name="Late" stackId="a" fill="#F59E0B" barSize={32} />
+                <Bar dataKey="absent" name="Absent" stackId="a" fill="#EF4444" barSize={32} radius={[4, 4, 0, 0]} />
+
+                {/* Status Bars */}
+                <Bar dataKey="holiday" name="Holiday" stackId="a" fill="#FEF3C7" barSize={32} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="noData" name="No Data" stackId="a" fill="#F3F4F6" barSize={32} radius={[4, 4, 0, 0]}>
+                  <LabelList dataKey="status" position="center" fill="#9CA3AF" fontSize={10} fontWeight="bold" formatter={(val) => val === 'No Data' ? 'No Data' : ''} />
+                </Bar>
+
+                {/* Transparent bar for Holiday Label when data exists */}
+                <Bar dataKey="holidayLabel" stackId="a" fill="transparent" barSize={32} legendType="none" isAnimationActive={false}>
+                  <LabelList
+                    dataKey="status"
+                    position="center"
+                    fill="#FFFFFF"
+                    fontSize={12}
+                    fontWeight="bold"
+                    angle={-90}
+                    dy={40}
+                    formatter={(val) => val === 'Holiday' ? 'Holiday' : ''}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -275,4 +345,3 @@ const ManagerDashboard = () => {
 }
 
 export default ManagerDashboard
-

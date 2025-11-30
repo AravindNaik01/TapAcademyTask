@@ -103,16 +103,54 @@ export const managerDashboard = async (req, res, next) => {
       { $sort: { _id: 1 } }
     ]);
 
+    // Fetch all employees to calculate historical totals
+    const allEmployees = await User.find({ role: 'employee' }).select('createdAt');
+
     // Fill in missing days for the chart
     const filledWeeklyTrend = [];
     for (let i = 6; i >= 0; i--) {
       const date = dayjs().subtract(i, 'day').format('YYYY-MM-DD');
       const dayData = weeklyTrend.find(d => d._id === date);
+      const presentCountForDay = dayData ? dayData.present : 0;
+
+      // Calculate total employees that existed on this specific date
+      const endOfDay = dayjs(date).endOf('day');
+      let totalEmployeesOnDate = allEmployees.filter(emp =>
+        dayjs(emp.createdAt).isBefore(endOfDay)
+      ).length;
+
+      // Correction: If attendance exists but employee records say fewer people existed (common in seeded data),
+      // assume at least the present employees existed. 
+      // We DO NOT assume the current totalEmployees existed, to avoid false "Absent" counts.
+      if (totalEmployeesOnDate < presentCountForDay) {
+        totalEmployeesOnDate = presentCountForDay;
+      }
+
+      let absentCount = Math.max(0, totalEmployeesOnDate - presentCountForDay);
+      let status = 'Working';
+
+      // Check for Holiday (Sundays)
+      if (dayjs(date).day() === 0) {
+        status = 'Holiday';
+        // Only zero out absent count if NOBODY worked.
+        // If people worked, we show the rest as absent (or just not present) to maintain chart scale.
+        if (presentCountForDay === 0) {
+          absentCount = 0;
+        }
+      }
+      // Check for No Data (No employees existed yet AND no attendance)
+      else if (totalEmployeesOnDate === 0) {
+        status = 'No Data';
+      }
+
       filledWeeklyTrend.push({
         date: dayjs(date).format('ddd'), // Mon, Tue, etc.
         fullDate: date,
-        present: dayData ? dayData.present : 0,
-        late: dayData ? dayData.late : 0,
+        present: presentCountForDay, // Always show present data if available
+        late: dayData ? dayData.late : 0, // Always show late data if available
+        absent: absentCount, // Use calculated absentCount (which handles the holiday logic)
+        status: status,
+        totalEmployees: totalEmployeesOnDate
       });
     }
 
@@ -208,4 +246,3 @@ export const managerDashboard = async (req, res, next) => {
     next(error);
   }
 };
-
