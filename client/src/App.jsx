@@ -8,6 +8,7 @@ import MyHistory from './features/attendance/MyHistory.jsx'
 import Profile from './features/auth/Profile.jsx'
 import ManagerDashboard from './features/attendance/ManagerDashboard.jsx'
 import AllAttendance from './features/attendance/AllAttendance.jsx'
+import EmployeeAttendanceDetails from './features/attendance/EmployeeAttendanceDetails.jsx'
 import TeamCalendar from './features/attendance/TeamCalendar.jsx'
 import Reports from './features/attendance/Reports.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
@@ -66,6 +67,14 @@ function App() {
           element={
             <ProtectedRoute requiredRole="manager">
               <AllAttendance />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/manager/attendance/:id"
+          element={
+            <ProtectedRoute requiredRole="manager">
+              <EmployeeAttendanceDetails />
             </ProtectedRoute>
           }
         />

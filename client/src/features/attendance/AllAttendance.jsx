@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { useGetAllAttendanceQuery, useGetEmployeeAttendanceQuery, useLazyExportCsvQuery } from './attendanceApi.js'
+import { useGetAllAttendanceQuery, useLazyExportCsvQuery } from './attendanceApi.js'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import AttendanceTable from './AttendanceTable.jsx'
 import { downloadCsv } from '../../utils/download.js'
 
 const AllAttendance = () => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -14,14 +16,8 @@ const AllAttendance = () => {
     page: 1,
     limit: 50,
   })
-  const [selectedEmployee, setSelectedEmployee] = useState(null)
-  const [showModal, setShowModal] = useState(false)
 
   const { data, isLoading, error } = useGetAllAttendanceQuery(filters)
-  const { data: employeeData, isLoading: isLoadingEmployee } = useGetEmployeeAttendanceQuery(
-    selectedEmployee,
-    { skip: !selectedEmployee }
-  )
   const [exportCsv, { isLoading: isExporting }] = useLazyExportCsvQuery()
 
   const attendance = data?.data || []
@@ -48,8 +44,7 @@ const AllAttendance = () => {
   }
 
   const handleEmployeeClick = (employeeId) => {
-    setSelectedEmployee(employeeId)
-    setShowModal(true)
+    navigate(`/manager/attendance/${employeeId}`)
   }
 
   const handleExport = async () => {
@@ -186,41 +181,6 @@ const AllAttendance = () => {
             </div>
           )}
         </>
-      )}
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">
-                Employee Attendance Details
-              </h2>
-              <button
-                onClick={() => {
-                  setShowModal(false)
-                  setSelectedEmployee(null)
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            {isLoadingEmployee ? (
-              <div className="text-center">Loading...</div>
-            ) : employeeData?.data ? (
-              <>
-                <div className="mb-4">
-                  <p><strong>Name:</strong> {employeeData.data.employee?.name || 'N/A'}</p>
-                  <p><strong>Employee ID:</strong> {employeeData.data.employee?.employeeId || 'N/A'}</p>
-                  <p><strong>Department:</strong> {employeeData.data.employee?.department || 'N/A'}</p>
-                </div>
-                <AttendanceTable attendance={employeeData.data.data || []} />
-              </>
-            ) : (
-              <div className="text-center text-gray-500">No data available</div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   )
