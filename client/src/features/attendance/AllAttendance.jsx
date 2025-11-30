@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useGetAllAttendanceQuery, useLazyExportCsvQuery } from './attendanceApi.js'
 import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import AttendanceTable from './AttendanceTable.jsx'
 import { downloadCsv } from '../../utils/download.js'
 
 const AllAttendance = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { isSidebarOpen } = useOutletContext()
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -66,7 +67,7 @@ const AllAttendance = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">All Employees Attendance</h1>
+        <h1 className={`text-3xl font-bold text-gray-900 transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>All Employees Attendance</h1>
         <button
           onClick={handleExport}
           disabled={isExporting}

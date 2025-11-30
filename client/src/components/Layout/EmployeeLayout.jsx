@@ -59,6 +59,7 @@ const EmployeeLayout = () => {
                 <nav className="flex-1 p-4 space-y-2 mt-4">
                     <Link
                         to="/employee/dashboard"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/employee/dashboard') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <LayoutDashboard size={20} />
@@ -66,6 +67,7 @@ const EmployeeLayout = () => {
                     </Link>
                     <Link
                         to="/employee/history"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/employee/history') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <Calendar size={20} />
@@ -73,6 +75,7 @@ const EmployeeLayout = () => {
                     </Link>
                     <Link
                         to="/employee/profile"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/employee/profile') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <User size={20} />
@@ -103,9 +106,17 @@ const EmployeeLayout = () => {
 
             {/* Main Content Wrapper */}
             <div
-                className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'
+                className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'
                     }`}
             >
+                {/* Mobile Backdrop */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-20 md:hidden glass"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Toggle Button (Visible when sidebar is closed) */}
                 {!isSidebarOpen && (
                     <button

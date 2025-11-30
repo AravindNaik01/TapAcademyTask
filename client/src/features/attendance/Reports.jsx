@@ -1,11 +1,12 @@
 import { useGetAttendanceSummaryQuery, useGetManagerDashboardQuery, useLazyExportCsvQuery } from './attendanceApi.js'
 import { useDispatch } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { downloadCsv } from '../../utils/download.js'
 
 const Reports = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const { isSidebarOpen } = useOutletContext()
   const { data: summaryData, isLoading: isLoadingSummary } = useGetAttendanceSummaryQuery()
   const { data: dashboardData, isLoading: isLoadingDashboard } = useGetManagerDashboardQuery()
   const [exportCsv, { isLoading: isExporting }] = useLazyExportCsvQuery()
@@ -40,7 +41,7 @@ const Reports = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Attendance Reports</h1>
+        <h1 className={`text-3xl font-bold text-gray-900 transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>Attendance Reports</h1>
         <button
           onClick={handleExport}
           disabled={isExporting}

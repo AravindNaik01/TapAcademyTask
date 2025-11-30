@@ -60,6 +60,7 @@ const ManagerLayout = () => {
                 <nav className="flex-1 p-4 space-y-2 mt-4">
                     <Link
                         to="/manager/dashboard"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/manager/dashboard') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <LayoutDashboard size={20} />
@@ -67,6 +68,7 @@ const ManagerLayout = () => {
                     </Link>
                     <Link
                         to="/manager/attendance/all"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/manager/attendance/all') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <Users size={20} />
@@ -74,6 +76,7 @@ const ManagerLayout = () => {
                     </Link>
                     <Link
                         to="/manager/calendar"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/manager/calendar') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <Calendar size={20} />
@@ -81,6 +84,7 @@ const ManagerLayout = () => {
                     </Link>
                     <Link
                         to="/manager/reports"
+                        onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive('/manager/reports') ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                     >
                         <FileText size={20} />
@@ -111,9 +115,17 @@ const ManagerLayout = () => {
 
             {/* Main Content Wrapper */}
             <div
-                className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-0'
+                className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64' : 'ml-0'
                     }`}
             >
+                {/* Mobile Backdrop */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-20 md:hidden glass"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Toggle Button (Visible when sidebar is closed) */}
                 {!isSidebarOpen && (
                     <button

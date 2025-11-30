@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
+import { useOutletContext } from 'react-router-dom'
 import { useGetMyHistoryQuery } from './attendanceApi.js'
 import AttendanceTable from './AttendanceTable.jsx'
 import { formatDate } from '../../utils/date.js'
 
 const MyHistory = () => {
   const { user } = useSelector((state) => state.auth)
+  const { isSidebarOpen } = useOutletContext()
   const [page, setPage] = useState(1)
   const [monthFilter, setMonthFilter] = useState('')
 
@@ -31,7 +33,7 @@ const MyHistory = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Attendance History</h1>
+      <h1 className={`text-3xl font-bold text-gray-900 mb-6 text-center transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>Attendance History</h1>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="mb-4">

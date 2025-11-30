@@ -37,7 +37,60 @@ const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmploy
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="md:hidden">
+        {sortedAttendance.length > 0 ? (
+          <div className="divide-y divide-gray-200">
+            {sortedAttendance.map((record) => (
+              <div
+                key={record._id}
+                className={`p-4 ${onEmployeeClick && record.userId ? 'cursor-pointer active:bg-gray-50' : ''}`}
+                onClick={() => onEmployeeClick && record.userId && onEmployeeClick(record.userId.employeeId || record.userId._id)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{formatDate(record.date)}</p>
+                    {showEmployeeColumn && (
+                      <p className="text-xs text-gray-500">{record.userId?.name || 'N/A'}</p>
+                    )}
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'present'
+                      ? 'bg-green-100 text-green-800'
+                      : record.status === 'half-day'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}
+                  >
+                    {record.status}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase">Check In</p>
+                    <p>{record.checkInTime ? formatDateTime(record.checkInTime) : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase">Check Out</p>
+                    <p>{record.checkOutTime ? formatDateTime(record.checkOutTime) : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase">Total Hours</p>
+                    <p>{record.totalHours ? formatDuration(record.totalHours) : 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 text-center text-sm text-gray-500">
+            No attendance records found
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

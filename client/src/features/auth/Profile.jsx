@@ -215,7 +215,7 @@ const Profile = () => {
         <div className="p-8">
             {/* Header with Title and Refresh */}
             <div className="flex justify-between items-center mb-8">
-                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-12' : ''}`}>
+                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>
                     <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
                 </div>
                 <button

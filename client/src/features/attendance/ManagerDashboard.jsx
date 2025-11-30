@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { useGetManagerDashboardQuery, useGetDepartmentStatsQuery } from './attendanceApi.js'
 import {
   BarChart,
@@ -72,6 +72,7 @@ const CustomPieTooltip = ({ active, payload }) => {
 
 const ManagerDashboard = () => {
   const navigate = useNavigate()
+  const { isSidebarOpen } = useOutletContext()
   const [filterType, setFilterType] = useState('daily')
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
 
@@ -102,8 +103,8 @@ const ManagerDashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Manager Dashboard</h1>
-        <div className="text-sm text-gray-500">
+        <h1 className={`text-3xl font-bold text-gray-900 transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>Manager Dashboard</h1>
+        <div className="text-sm text-gray-500 hidden sm:block">
           Today: {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>

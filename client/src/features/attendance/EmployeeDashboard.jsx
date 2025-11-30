@@ -135,7 +135,7 @@ const EmployeeDashboard = () => {
         <div className="p-8">
             {/* Top Header */}
             <header className="flex justify-between items-center mb-8">
-                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-12' : ''}`}>
+                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-24' : ''}`}>
                     <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
                 </div>
                 <div className="flex items-center gap-6">
@@ -150,9 +150,8 @@ const EmployeeDashboard = () => {
                             )}
                         </button>
 
-                        {/* Notifications Dropdown */}
                         {isNotificationsOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute top-full -right-14 sm:right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
                                     <h3 className="font-bold text-gray-900">Notifications</h3>
                                     <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{notifications.length} New</span>
