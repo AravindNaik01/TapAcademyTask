@@ -17,8 +17,8 @@ const Login = () => {
   const { user } = useSelector((state) => state.auth)
   const [login, { isLoading }] = useLoginMutation()
 
-  // Get role from navigation state (if available)
-  const role = location.state?.role
+  // Get role from navigation state (if available) or default to employee
+  const role = location.state?.role || 'employee'
   const title = role
     ? `${role.charAt(0).toUpperCase() + role.slice(1)} Sign In`
     : 'Sign in to your account'

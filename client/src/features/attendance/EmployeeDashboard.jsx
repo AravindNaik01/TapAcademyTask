@@ -1,209 +1,323 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { useGetTodayQuery, useGetMySummaryQuery } from './attendanceApi.js'
-import CheckInOutButtons from './CheckInOutButtons.jsx'
-import { formatDate, formatTime } from '../../utils/date.js'
+import { Link, useNavigate, useLocation, useOutletContext } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import {
+    LayoutDashboard,
+    Calendar,
+    Bell,
+    Clock,
+    CheckCircle,
+    AlertCircle,
+    Play,
+    Square
+} from 'lucide-react'
+import { useGetTodayQuery, useGetMySummaryQuery, useCheckInMutation, useCheckOutMutation } from './attendanceApi.js'
+import { logout } from '../auth/authSlice.js'
+import { formatDate, formatTime, formatDuration } from '../../utils/date.js'
 
 const EmployeeDashboard = () => {
-  const { user } = useSelector((state) => state.auth)
-  const { data: todayData, isLoading: isLoadingToday } = useGetTodayQuery()
-  const { data: summaryData, isLoading: isLoadingSummary } = useGetMySummaryQuery()
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const location = useLocation()
+    const { user } = useSelector((state) => state.auth) // Fixed: user was undefined in previous context if not careful, but it comes from auth slice
+    const { isSidebarOpen } = useOutletContext()
 
-  const attendance = todayData?.data?.attendance
-  const status = todayData?.data?.status || 'not checked in'
+    // Queries
+    const { data: todayData, isLoading: isLoadingToday, refetch: refetchToday } = useGetTodayQuery(undefined, {
+        skip: !user || user.role !== 'employee',
+        pollingInterval: 30000,
+    })
+    const { data: summaryData, isLoading: isLoadingSummary } = useGetMySummaryQuery(undefined, {
+        skip: !user || user.role !== 'employee',
+    })
 
-  const [liveDuration, setLiveDuration] = useState('0.00')
+    // Mutations
+    const [checkIn, { isLoading: isCheckingIn }] = useCheckInMutation()
+    const [checkOut, { isLoading: isCheckingOut }] = useCheckOutMutation()
 
-  useEffect(() => {
-    let interval
+    // State
+    const [currentTime, setCurrentTime] = useState(new Date())
+    const [greeting, setGreeting] = useState('')
 
-    if (status === 'checked in' && attendance?.checkInTime) {
-      const updateTimer = () => {
-        const start = new Date(attendance.checkInTime)
-        const now = new Date()
-        const diff = now - start
-        const hours = diff / (1000 * 60 * 60)
-        setLiveDuration(hours.toFixed(2))
-      }
+    const attendance = todayData?.data?.attendance
+    const status = todayData?.data?.status || 'not checked in'
+    const stats = summaryData?.data?.statistics || {}
+    const recentActivity = summaryData?.data?.last7Days || []
 
-      updateTimer()
-      interval = setInterval(updateTimer, 1000) // Update every second for better responsiveness
-    } else {
-      setLiveDuration(attendance?.totalHours?.toFixed(2) || '0.00')
+    // Update Time & Greeting
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const now = new Date()
+            setCurrentTime(now)
+
+            const hour = now.getHours()
+            if (hour < 12) setGreeting('Good Morning')
+            else if (hour < 18) setGreeting('Good Afternoon')
+            else setGreeting('Good Evening')
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [])
+
+    // Handlers
+    const handleCheckIn = async () => {
+        try {
+            await checkIn().unwrap()
+            dispatch({ type: 'toast/show', payload: { message: 'Checked in successfully!', type: 'success' } })
+            refetchToday()
+        } catch (err) {
+            dispatch({ type: 'toast/show', payload: { message: err.data?.message || 'Check in failed', type: 'error' } })
+        }
     }
 
-    return () => clearInterval(interval)
-  }, [status, attendance])
+    const handleCheckOut = async () => {
+        try {
+            await checkOut().unwrap()
+            dispatch({ type: 'toast/show', payload: { message: 'Checked out successfully!', type: 'success' } })
+            refetchToday()
+        } catch (err) {
+            dispatch({ type: 'toast/show', payload: { message: err.data?.message || 'Check out failed', type: 'error' } })
+        }
+    }
 
-  if (isLoadingToday || isLoadingSummary) {
+    if (isLoadingToday || isLoadingSummary) {
+        return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading...</div>
+    }
+
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">Loading...</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.name}!</h1>
-        <p className="text-gray-600 mt-2">
-          Employee ID: {user?.employeeId} | Department: {user?.department}
-        </p>
-      </div>
-
-
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-2xl font-semibold mb-4">Today's Attendance</h2>
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">Status: <span className={`font-bold uppercase ${status === 'checked in' ? 'text-green-600' : status === 'checked out' ? 'text-red-600' : 'text-gray-800'}`}>{status}</span></p>
-        </div>
-
-        <div className="mb-6 flex justify-center">
-          <CheckInOutButtons />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <p className="text-sm text-gray-600 mb-1">Check In</p>
-            <p className="text-xl font-bold text-gray-800">
-              {attendance?.checkInTime ? formatTime(attendance.checkInTime) : '--:--'}
-            </p>
-          </div>
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <p className="text-sm text-gray-600 mb-1">Check Out</p>
-            <p className="text-xl font-bold text-gray-800">
-              {attendance?.checkOutTime ? (
-                formatTime(attendance.checkOutTime)
-              ) : status === 'checked in' ? (
-                <span className="text-green-600 text-base font-medium animate-pulse">In Progress...</span>
-              ) : (
-                '--:--'
-              )}
-            </p>
-          </div>
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <p className="text-sm text-gray-600 mb-1">Total Hours</p>
-            <p className="text-xl font-bold text-blue-600">{liveDuration} <span className="text-sm text-gray-500 font-normal">hrs</span></p>
-          </div>
-        </div>
-
-      </div>
-
-      {summaryData?.data && (
-        <>
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Last 7 Days</h2>
-              <Link
-                to="/employee/history"
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                View Full History →
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Check In
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Check Out
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Hours
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {summaryData.data.last7Days?.length > 0 ? (
-                    summaryData.data.last7Days.map((record, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(record.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.checkInTime ? formatTime(record.checkInTime) : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.checkOutTime ? formatTime(record.checkOutTime) : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {record.totalHours || 0} hrs
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === 'present'
-                              ? 'bg-green-100 text-green-800'
-                              : record.status === 'half-day'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                              }`}
-                          >
-                            {record.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
-                        No attendance records found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {summaryData.data.statistics && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-                <p className="text-sm text-gray-600 font-medium">Present (This Month)</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {summaryData.data.statistics.totalPresent || 0}
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
-                <p className="text-sm text-gray-600 font-medium">Late / Half Day</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {(summaryData.data.statistics.totalLate || 0) + (summaryData.data.statistics.totalHalfDay || 0)}
-                  </p>
-                  <span className="text-xs text-gray-500">
-                    ({summaryData.data.statistics.totalLate || 0} Late, {summaryData.data.statistics.totalHalfDay || 0} Half-Day)
-                  </span>
+        <div className="p-8">
+            {/* Top Header */}
+            <header className="flex justify-between items-center mb-8">
+                <div className={`flex items-center gap-3 transition-all duration-300 ${!isSidebarOpen ? 'ml-12' : ''}`}>
+                    <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded uppercase tracking-wider">
+                        Simulation
+                    </span>
                 </div>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-                <p className="text-sm text-gray-600 font-medium">Absent (This Month)</p>
-                <p className="text-3xl font-bold text-red-600">
-                  {summaryData.data.statistics.totalAbsent || 0}
-                </p>
-              </div>
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-                <p className="text-sm text-gray-600 font-medium">Total Hours (This Month)</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {summaryData.data.statistics.totalHoursWorked || 0}
-                </p>
-              </div>
+                <div className="flex items-center gap-6">
+                    <button className="relative text-gray-500 hover:text-gray-700 transition-colors">
+                        <Bell size={20} />
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div className="text-right">
+                        <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Today</p>
+                        <p className="text-sm font-semibold text-gray-800">
+                            {currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        </p>
+                    </div>
+                </div>
+            </header>
+
+            {/* Welcome Banner */}
+            <div className="bg-[#0f172a] rounded-3xl p-8 text-white mb-8 relative overflow-hidden shadow-xl">
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div className="inline-block px-3 py-1 bg-white/10 rounded-full text-xs font-medium mb-3 border border-white/10">
+                            Staff Portal
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+                            {greeting}, {user?.name?.split(' ')[0]}
+                        </h1>
+                        <p className="text-blue-200">
+                            You've contributed <span className="bg-blue-600/30 px-2 py-0.5 rounded text-white font-bold">{formatDuration(stats.totalHoursWorked)}</span> this month.
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-5xl md:text-6xl font-bold font-mono tracking-tight">
+                            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}
+                        </div>
+                        <div className="text-blue-300 font-medium mt-1 flex items-center justify-end gap-2">
+                            <Calendar size={16} />
+                            {currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Decorative Circles */}
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl"></div>
             </div>
-          )}
-        </>
-      )}
-    </div>
-  )
+
+            {/* Dashboard Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                {/* Left Column: Status Card */}
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    {/* Progress Circle Mockup */}
+                    <div className="relative w-48 h-48 mb-6">
+                        <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="96" cy="96" r="88" stroke="#f3f4f6" strokeWidth="12" fill="none" />
+                            <circle
+                                cx="96"
+                                cy="96"
+                                r="88"
+                                stroke={status === 'checked in' ? '#3b82f6' : '#e5e7eb'}
+                                strokeWidth="12"
+                                fill="none"
+                                strokeDasharray={2 * Math.PI * 88}
+                                strokeDashoffset={status === 'checked in' ? 0 : 2 * Math.PI * 88}
+                                className="transition-all duration-1000 ease-out"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className={`w-32 h-32 rounded-full flex items-center justify-center ${status === 'checked in' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400'}`}>
+                                <Clock size={48} />
+                            </div>
+                        </div>
+                        {status === 'checked in' && (
+                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
+                                Active
+                            </div>
+                        )}
+                    </div>
+
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        {status === 'checked in' ? 'Currently Working' : status === 'checked out' ? 'Shift Completed' : 'Not Checked In'}
+                    </h3>
+                    <p className="text-gray-500 mb-8 max-w-[200px]">
+                        {status === 'checked in'
+                            ? `Started at ${formatTime(attendance?.checkInTime)}. Don't forget to take breaks!`
+                            : status === 'checked out'
+                                ? "Great job today! See you tomorrow."
+                                : "Ready to start your day? Mark your attendance now."}
+                    </p>
+
+                    {status === 'not checked in' && (
+                        <button
+                            onClick={handleCheckIn}
+                            disabled={isCheckingIn}
+                            className="w-full bg-[#0f172a] text-white py-4 rounded-xl font-bold text-lg hover:bg-gray-800 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                        >
+                            {isCheckingIn ? 'Checking In...' : <><Play size={20} fill="currentColor" /> Check In Now</>}
+                        </button>
+                    )}
+
+                    {status === 'checked in' && (
+                        <button
+                            onClick={handleCheckOut}
+                            disabled={isCheckingOut}
+                            className="w-full bg-red-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/30 hover:shadow-xl hover:-translate-y-1"
+                        >
+                            {isCheckingOut ? 'Checking Out...' : <><Square size={20} fill="currentColor" /> Check Out</>}
+                        </button>
+                    )}
+
+                    {status === 'checked out' && (
+                        <button disabled className="w-full bg-gray-100 text-gray-400 py-4 rounded-xl font-bold text-lg cursor-not-allowed">
+                            Completed
+                        </button>
+                    )}
+                </div>
+
+                {/* Right Column: Stats & Activity */}
+                <div className="lg:col-span-2 flex flex-col gap-8">
+
+                    {/* Stats Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* On Time Card */}
+                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:border-blue-200 transition-colors">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">On Time</p>
+                                    <h3 className="text-4xl font-bold text-gray-900">{(stats.totalPresent || 0) - (stats.totalLate || 0)}</h3>
+                                </div>
+                                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                    <CheckCircle size={24} />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                                    100%
+                                </span>
+                                <span className="text-xs text-gray-400">Days this month</span>
+                            </div>
+                        </div>
+
+                        {/* Late Arrivals Card */}
+                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:border-yellow-200 transition-colors">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Late Arrivals</p>
+                                    <h3 className="text-4xl font-bold text-gray-900">{stats.totalLate || 0}</h3>
+                                </div>
+                                <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-yellow-500/30 group-hover:scale-110 transition-transform">
+                                    <AlertCircle size={24} />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                                    0%
+                                </span>
+                                <span className="text-xs text-gray-400">Days this month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex-1">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                                    <LayoutDashboard size={20} />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
+                            </div>
+                            <Link to="/employee/history" className="text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                                View History
+                            </Link>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="text-left border-b border-gray-100">
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Timing</th>
+                                        <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Hrs</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {recentActivity.length > 0 ? (
+                                        recentActivity.slice(0, 5).map((log, index) => (
+                                            <tr key={index} className="group hover:bg-gray-50/50 transition-colors">
+                                                <td className="py-4 text-sm font-medium text-gray-900">
+                                                    {new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                </td>
+                                                <td className="py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${log.status === 'present' ? 'bg-green-100 text-green-700' :
+                                                        log.status === 'late' ? 'bg-yellow-100 text-yellow-700' :
+                                                            log.status === 'absent' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                        {log.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 text-sm text-gray-500 font-mono">
+                                                    {log.checkInTime ? formatTime(log.checkInTime) : '--:--'} - {log.checkOutTime ? formatTime(log.checkOutTime) : '--:--'}
+                                                </td>
+                                                <td className="py-4 text-sm font-bold text-gray-900 text-right">
+                                                    {formatDuration(log.totalHours)}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="py-8 text-center text-gray-400 text-sm">
+                                                No recent activity found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    )
 }
 
 export default EmployeeDashboard
-

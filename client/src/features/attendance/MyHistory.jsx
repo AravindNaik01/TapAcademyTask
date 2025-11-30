@@ -1,13 +1,17 @@
 import { useState } from 'react'
+import { useSelector } from 'react-redux'
 import { useGetMyHistoryQuery } from './attendanceApi.js'
 import AttendanceTable from './AttendanceTable.jsx'
 import { formatDate } from '../../utils/date.js'
 
 const MyHistory = () => {
+  const { user } = useSelector((state) => state.auth)
   const [page, setPage] = useState(1)
   const [monthFilter, setMonthFilter] = useState('')
 
-  const { data, isLoading, error } = useGetMyHistoryQuery({ page, limit: 30 })
+  const { data, isLoading, error } = useGetMyHistoryQuery({ page, limit: 30 }, {
+    skip: !user || user.role !== 'employee',
+  })
 
   const attendance = data?.data || []
   const totalPages = data?.pages || 1
@@ -27,7 +31,7 @@ const MyHistory = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Attendance History</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Attendance History</h1>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <div className="mb-4">

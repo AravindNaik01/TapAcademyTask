@@ -13,11 +13,11 @@ const toastReducer = (state = { message: null, type: null }, action) => {
   }
 }
 
-// Load initial auth state from localStorage
+// Load initial auth state from sessionStorage
 const loadInitialAuthState = () => {
   try {
-    const user = localStorage.getItem('user')
-    const accessToken = localStorage.getItem('accessToken')
+    const user = sessionStorage.getItem('user')
+    const accessToken = sessionStorage.getItem('accessToken')
 
     return {
       user: user ? JSON.parse(user) : null,

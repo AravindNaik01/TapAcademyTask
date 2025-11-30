@@ -9,6 +9,7 @@ const MarkAttendance = () => {
   const [currentTime, setCurrentTime] = useState(new Date())
   const { data: todayData, isLoading, error, refetch } = useGetTodayQuery(undefined, {
     pollingInterval: 30000, // Auto-refresh every 30 seconds
+    skip: !user || user.role !== 'employee',
   })
 
   const attendance = todayData?.data?.attendance
@@ -124,7 +125,7 @@ const MarkAttendance = () => {
         {/* Current Status Card */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6 border-2">
           <h2 className="text-xl font-semibold mb-4">Today's Attendance Status</h2>
-          
+
           {/* Status Badge */}
           <div className="flex items-center justify-center mb-6">
             <div
@@ -255,8 +256,8 @@ const MarkAttendance = () => {
                     {attendance.checkOutTime
                       ? `${attendance.totalHours?.toFixed(2) || 0} hours`
                       : elapsedHours
-                      ? `${elapsedHours} hours`
-                      : 'Just started'}
+                        ? `${elapsedHours} hours`
+                        : 'Just started'}
                   </p>
                 </div>
               )}

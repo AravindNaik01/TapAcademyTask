@@ -1,9 +1,8 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import Login from './features/auth/Login.jsx'
 import Register from './features/auth/Register.jsx'
 import EmployeeDashboard from './features/attendance/EmployeeDashboard.jsx'
-
 import MyHistory from './features/attendance/MyHistory.jsx'
 import Profile from './features/auth/Profile.jsx'
 import ManagerDashboard from './features/attendance/ManagerDashboard.jsx'
@@ -15,45 +14,32 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import NavBar from './components/Layout/NavBar.jsx'
 import Toast from './components/Toast.jsx'
 import Home from './pages/Home.jsx'
+import EmployeeLayout from './components/Layout/EmployeeLayout.jsx'
 
 function App() {
   const { user } = useSelector((state) => state.auth)
   const location = useLocation()
 
+  // Hide NavBar for home page and all employee routes (since they have their own sidebar)
+  const shouldShowNavBar = user && location.pathname !== '/' && !location.pathname.startsWith('/employee')
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {user && location.pathname !== '/' && <NavBar />}
+      {shouldShowNavBar && <NavBar />}
       <Toast />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<Home />} />
 
-        <Route
-          path="/employee/dashboard"
-          element={
-            <ProtectedRoute requiredRole="employee">
-              <EmployeeDashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* Employee Routes with Sidebar Layout */}
+        <Route element={<ProtectedRoute requiredRole="employee"><EmployeeLayout /></ProtectedRoute>}>
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          <Route path="/employee/history" element={<MyHistory />} />
+          <Route path="/employee/profile" element={<Profile />} />
+        </Route>
 
-        <Route
-          path="/employee/history"
-          element={
-            <ProtectedRoute requiredRole="employee">
-              <MyHistory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/employee/profile"
-          element={
-            <ProtectedRoute requiredRole="employee">
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
+        {/* Manager Routes */}
         <Route
           path="/manager/dashboard"
           element={

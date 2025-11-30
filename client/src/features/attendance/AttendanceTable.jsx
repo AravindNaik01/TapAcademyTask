@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatDate, formatDateTime } from '../../utils/date.js'
+import { formatDate, formatDateTime, formatDuration } from '../../utils/date.js'
 
 const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmployeeClick }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
@@ -92,15 +92,15 @@ const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmploy
                     {record.checkOutTime ? formatDateTime(record.checkOutTime) : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {record.totalHours ? `${record.totalHours} hrs` : 'N/A'}
+                    {record.totalHours ? formatDuration(record.totalHours) : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === 'present'
-                          ? 'bg-green-100 text-green-800'
-                          : record.status === 'half-day'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : record.status === 'half-day'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                         }`}
                     >
                       {record.status}
@@ -123,4 +123,3 @@ const AttendanceTable = ({ attendance = [], showEmployeeColumn = false, onEmploy
 }
 
 export default AttendanceTable
-

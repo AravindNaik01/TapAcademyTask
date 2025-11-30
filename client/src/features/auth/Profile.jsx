@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { useGetMeQuery, useUpdateProfileMutation } from './authApi.js'
+import { useGetMeQuery, useUpdateProfileMutation, useGetDepartmentsQuery } from './authApi.js'
 import { setCredentials, logout } from './authSlice.js'
+import { RefreshCw } from 'lucide-react'
 
 const Profile = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const { user: userFromStore, accessToken } = useSelector((state) => state.auth)
+
+    // Fetch user data with refetch on mount to ensure freshness
     const { data: meData, isLoading, error, refetch } = useGetMeQuery(undefined, {
-        skip: !accessToken, // Skip query if no token
+        skip: !accessToken,
+        refetchOnMountOrArgChange: true,
     })
+
+    // Fetch departments for the dropdown
+    const { data: departmentsData } = useGetDepartmentsQuery()
+    const departments = departmentsData?.data || []
+
     const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation()
 
     const user = meData?.data || userFromStore
@@ -91,7 +100,7 @@ const Profile = () => {
             const result = await updateProfile(formDataToSend).unwrap()
 
             // Update Redux store with new user data
-            const currentToken = accessToken || localStorage.getItem('accessToken')
+            const currentToken = accessToken || sessionStorage.getItem('accessToken')
             dispatch(
                 setCredentials({
                     user: result.data,
@@ -204,7 +213,16 @@ const Profile = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-2xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+                    <button
+                        onClick={() => refetch()}
+                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors"
+                        title="Refresh Data"
+                    >
+                        <RefreshCw size={20} />
+                    </button>
+                </div>
 
                 {/* ... (success/error messages) */}
                 {successMessage && (
@@ -331,19 +349,41 @@ const Profile = () => {
                             <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
                                 Department <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                id="department"
-                                name="department"
-                                type="text"
-                                value={formData.department}
-                                onChange={handleChange}
-                                disabled={!isEditing}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
-                                    ? 'border-gray-300'
-                                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                                    } ${errors.department ? 'border-red-500' : ''}`}
-                                placeholder="Enter your department"
-                            />
+                            {isEditing && departments.length > 0 ? (
+                                <select
+                                    id="department"
+                                    name="department"
+                                    value={formData.department}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${errors.department ? 'border-red-500' : 'border-gray-300'
+                                        }`}
+                                >
+                                    <option value="">Select Department</option>
+                                    {departments.map((dept) => (
+                                        <option key={dept._id} value={dept.name}>
+                                            {dept.name}
+                                        </option>
+                                    ))}
+                                    {/* Fallback if current department is not in list */}
+                                    {formData.department && !departments.some(d => d.name === formData.department) && (
+                                        <option value={formData.department}>{formData.department}</option>
+                                    )}
+                                </select>
+                            ) : (
+                                <input
+                                    id="department"
+                                    name="department"
+                                    type="text"
+                                    value={formData.department}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isEditing
+                                        ? 'border-gray-300'
+                                        : 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                                        } ${errors.department ? 'border-red-500' : ''}`}
+                                    placeholder="Enter your department"
+                                />
+                            )}
                             {errors.department && <p className="text-red-500 text-sm mt-1">{errors.department}</p>}
                         </div>
 

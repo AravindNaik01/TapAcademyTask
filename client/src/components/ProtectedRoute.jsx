@@ -3,10 +3,10 @@ import { useSelector } from 'react-redux'
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, accessToken } = useSelector((state) => state.auth)
-  
-  // Check localStorage as fallback
-  const token = accessToken || localStorage.getItem('accessToken')
-  const storedUser = user || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null)
+
+  // Check sessionStorage as fallback
+  const token = accessToken || sessionStorage.getItem('accessToken')
+  const storedUser = user || (sessionStorage.getItem('user') ? JSON.parse(sessionStorage.getItem('user')) : null)
 
   if (!token || !storedUser) {
     return <Navigate to="/login" replace />

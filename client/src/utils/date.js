@@ -39,10 +39,17 @@ export const getMonthStartEnd = (monthString) => {
   const [year, month] = monthString.split('-').map(Number)
   const startDate = new Date(year, month - 1, 1)
   const endDate = new Date(year, month, 0)
-  
+
   return {
     startDate: getYYYYMMDD(startDate),
     endDate: getYYYYMMDD(endDate),
   }
+}
+
+export const formatDuration = (decimalHours) => {
+  if (decimalHours === undefined || decimalHours === null) return '0h 0m'
+  const hours = Math.floor(decimalHours)
+  const minutes = Math.round((decimalHours - hours) * 60)
+  return `${hours}h ${minutes}m`
 }
 

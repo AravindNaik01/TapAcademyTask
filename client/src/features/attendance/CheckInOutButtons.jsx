@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useCheckInMutation, useCheckOutMutation, useGetTodayQuery } from './attendanceApi.js'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 
 const CheckInOutButtons = () => {
   const dispatch = useDispatch()
-  const { data: todayData, isLoading: isLoadingToday, refetch } = useGetTodayQuery()
+  const { user } = useSelector((state) => state.auth)
+  const { data: todayData, isLoading: isLoadingToday, refetch } = useGetTodayQuery(undefined, {
+    skip: !user || user.role !== 'employee',
+  })
   const [checkIn, { isLoading: isCheckingIn }] = useCheckInMutation()
   const [checkOut, { isLoading: isCheckingOut }] = useCheckOutMutation()
   const [showConfirmCheckOut, setShowConfirmCheckOut] = useState(false)
@@ -169,8 +172,8 @@ const CheckInOutButtons = () => {
           onClick={handleCheckIn}
           disabled={isCheckingIn}
           className={`w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-lg font-semibold text-lg transition-all transform ${!isCheckingIn
-              ? 'bg-green-500 hover:bg-green-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ? 'bg-green-500 hover:bg-green-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
         >
           {isCheckingIn ? (
@@ -194,8 +197,8 @@ const CheckInOutButtons = () => {
           onClick={confirmCheckOut}
           disabled={isCheckingOut}
           className={`w-full sm:w-auto min-w-[200px] py-4 px-8 rounded-lg font-semibold text-lg transition-all transform ${!isCheckingOut
-              ? 'bg-red-500 hover:bg-red-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ? 'bg-red-500 hover:bg-red-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
         >
           {isCheckingOut ? (

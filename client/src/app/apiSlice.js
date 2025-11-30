@@ -6,9 +6,9 @@ const baseQuery = fetchBaseQuery({
     // Try to get token from Redux state first
     let token = getState().auth.accessToken
 
-    // Fallback to localStorage if not in Redux state
+    // Fallback to sessionStorage if not in Redux state
     if (!token) {
-      token = localStorage.getItem('accessToken')
+      token = sessionStorage.getItem('accessToken')
     }
 
     if (token) {
@@ -41,8 +41,8 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
       // Store new access token
       const { accessToken } = refreshResult.data.data
       if (accessToken) {
-        // Update localStorage
-        localStorage.setItem('accessToken', accessToken)
+        // Update sessionStorage
+        sessionStorage.setItem('accessToken', accessToken)
         // Retry original query with new token
         result = await baseQuery(args, api, extraOptions)
       }
